@@ -1,13 +1,13 @@
 import pickle
 from oprf import client_prf_offline, order_of_generator, G
 from time import time
+from constants import OPRF_CLIENT_KEY
 
-# client's PRF secret key (a value from  range(order_of_generator))
-oprf_client_key = 12345678910111213141516171819222222222222
+# client's PRF secret key (a value from range(order_of_generator))
 t0 = time()
 
 # key * generator of elliptic curve
-client_point_precomputed = (oprf_client_key % order_of_generator) * G
+client_point_precomputed = (OPRF_CLIENT_KEY % order_of_generator) * G
 
 client_set = []
 f = open('client_set', 'r')

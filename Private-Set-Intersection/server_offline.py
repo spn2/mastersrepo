@@ -1,4 +1,4 @@
-from parameters import sigma_max, number_of_hashes, output_bits, bin_capacity, alpha, hash_seeds, plain_modulus
+from constants import *
 from simple_hash import Simple_hash
 from auxiliary_functions import coeffs_from_roots
 from math import log2
@@ -6,11 +6,8 @@ import pickle
 from oprf import server_prf_offline_parallel, order_of_generator, G
 from time import time
 
-#server's PRF secret key
-oprf_server_key = 1234567891011121314151617181920
-
 # key * generator of elliptic curve
-server_point_precomputed = (oprf_server_key % order_of_generator) * G
+server_point_precomputed = (OPRF_SERVER_KEY % order_of_generator) * G
 
 server_set = []
 f = open('server_set', 'r')
@@ -24,21 +21,21 @@ PRFed_server_set = server_prf_offline_parallel(server_set, server_point_precompu
 PRFed_server_set = set(PRFed_server_set)
 t1 = time()
 
-log_no_hashes = int(log2(number_of_hashes)) + 1
-dummy_msg_server = 2 ** (sigma_max - output_bits + log_no_hashes) + 1 
+log_no_hashes = int(log2(NUMBER_OF_HASHES)) + 1
+dummy_msg_server = 2 ** (SIGMA_MAX - OUTPUT_BITS + log_no_hashes) + 1 
 server_size = len(server_set)
-minibin_capacity = int(bin_capacity / alpha)
-number_of_bins = 2 ** output_bits
+minibin_capacity = int(BIN_CAP / ALPHA)
+number_of_bins = 2 ** OUTPUT_BITS
 
 # The OPRF-processed database entries are simple hashed
-SH = Simple_hash(hash_seeds)
+SH = Simple_hash(HASH_SEEDS)
 for item in PRFed_server_set:
-    for i in range(number_of_hashes):
+    for i in range(NUMBER_OF_HASHES):
         SH.insert(item, i)
 
 # simple_hashed_data is padded with dummy_msg_server
 for i in range(number_of_bins):
-    for j in range(bin_capacity):
+    for j in range(BIN_CAP):
         if SH.simple_hashed_data[i][j] == None:
             SH.simple_hashed_data[i][j] = dummy_msg_server
 
@@ -52,9 +49,9 @@ poly_coeffs = []
 for i in range(number_of_bins):
     # we create a list of coefficients of all minibins from concatenating the list of coefficients of each minibin
     coeffs_from_bin = []
-    for j in range(alpha):
+    for j in range(ALPHA):
         roots = [SH.simple_hashed_data[i][minibin_capacity * j + r] for r in range(minibin_capacity)]
-        coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, plain_modulus).tolist()
+        coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, PLAIN_MOD).tolist()
     poly_coeffs.append(coeffs_from_bin)
 
 f = open('server_preprocessed', 'wb')
