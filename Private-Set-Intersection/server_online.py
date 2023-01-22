@@ -4,17 +4,12 @@ import pickle
 import numpy as np
 from math import log2
 
-from parameters import number_of_hashes, bin_capacity, alpha, ell
+from parameters import *
 from auxiliary_functions import power_reconstruct
 from oprf import server_prf_online_parallel
 
 oprf_server_key = 1234567891011121314151617181920
 from time import time
-
-log_no_hashes = int(log2(number_of_hashes)) + 1
-base = 2 ** ell
-minibin_capacity = int(bin_capacity / alpha)
-logB_ell = int(log2(minibin_capacity) / ell) + 1 # <= 2 ** HE.depth
 
 serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serv.bind(('localhost', 4470))

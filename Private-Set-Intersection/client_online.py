@@ -3,18 +3,15 @@ from time import time
 import socket
 import pickle
 from math import log2
-from parameters import sigma_max, output_bits, plain_modulus, poly_modulus_degree, number_of_hashes, bin_capacity, alpha, ell, hash_seeds
+from parameters import *
 from cuckoo_hash import reconstruct_item, Cuckoo
 from auxiliary_functions import windowing
 from oprf import order_of_generator, client_prf_online_parallel
 
 oprf_client_key = 12345678910111213141516171819222222222222
 
-log_no_hashes = int(log2(number_of_hashes)) + 1
-base = 2 ** ell
-minibin_capacity = int(bin_capacity / alpha)
-logB_ell = int(log2(minibin_capacity) / ell) + 1 # <= 2 ** HE.depth
 dummy_msg_client = 2 ** (sigma_max - output_bits + log_no_hashes)
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('localhost', 4470))
 

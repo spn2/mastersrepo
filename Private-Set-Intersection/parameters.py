@@ -31,3 +31,10 @@ alpha = 16
 
 # windowing parameter
 ell = 2
+
+# write about these
+##############################################################################################################
+log_no_hashes = int(log2(number_of_hashes)) + 1
+base = 2 ** ell
+minibin_capacity = int(bin_capacity / alpha)
+logB_ell = int(log2(minibin_capacity) / ell) + 1 # <= 2 ** HE.depth
