@@ -3,14 +3,14 @@ from time import time
 import socket
 import pickle
 from math import log2
-from parameters import *
+from constants import *
 from cuckoo_hash import reconstruct_item, Cuckoo
 from auxiliary_functions import windowing
 from oprf import order_of_generator, client_prf_online_parallel
 
 oprf_client_key = 12345678910111213141516171819222222222222
 
-dummy_msg_client = 2 ** (sigma_max - output_bits + log_no_hashes)
+dummy_msg_client = 2 ** (SIGMA_MAX - OUTPUT_BITS + LOG_NO_HASHES)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('localhost', 4470))
@@ -18,11 +18,9 @@ client.connect(('localhost', 4470))
 
 
 
-
-
 # Pyfhel: Setting the public and private contexts for the BFV Homorphic Encryption scheme
 HEctx = Pyfhel()
-HEctx.contextGen(scheme="bfv", n=poly_modulus_degree, t=plain_modulus)
+HEctx.contextGen(scheme="bfv", n=POLY_MOD, t=PLAIN_MOD)
 HEctx.keyGen()
 HEctx.relinKeyGen()
 HEctx.rotateKeyGen()
@@ -67,7 +65,7 @@ PRFed_client_set = client_prf_online_parallel(key_inverse, PRFed_encoded_client_
 print(' * OPRF protocol done!')
 
 # Each PRFed item from the client set is mapped to a Cuckoo hash table
-CH = Cuckoo(hash_seeds)
+CH = Cuckoo(HASH_SEEDS)
 for item in PRFed_client_set:
     CH.insert(item)
 
@@ -79,24 +77,24 @@ for i in range(CH.number_of_bins):
 # We apply the windowing procedure for each item from the Cuckoo structure
 windowed_items = []
 for item in CH.data_structure:
-    windowed_items.append(windowing(item, minibin_capacity, plain_modulus))
+    windowed_items.append(windowing(item, MINIBIN_CAP, PLAIN_MOD))
 
 plain_query = [None for k in range(len(windowed_items))]
-enc_query = [[None for j in range(logB_ell)] for i in range(1, base)]
+enc_query = [[None for j in range(LOG_B_ELL)] for i in range(1, BASE)]
 
 # We create the <<batched>> query to be sent to the server
 # By our choice of parameters, number of bins = poly modulus degree (m/N =1), so we get (base - 1) * logB_ell ciphertexts
-for j in range(logB_ell):
-    for i in range(base - 1):
-        if ((i + 1) * base ** j - 1 < minibin_capacity):
+for j in range(LOG_B_ELL):
+    for i in range(BASE - 1):
+        if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
             for k in range(len(windowed_items)):
                 plain_query[k] = windowed_items[k][i][j]
             enc_query[i][j] = HEctx.encrypt(plain_query)
 
-enc_query_serialized = [[None for j in range(logB_ell)] for i in range(1, base)]
-for j in range(logB_ell):
-    for i in range(base - 1):
-        if ((i + 1) * base ** j - 1 < minibin_capacity):
+enc_query_serialized = [[None for j in range(LOG_B_ELL)] for i in range(1, BASE)]
+for j in range(LOG_B_ELL):
+    for i in range(BASE - 1):
+        if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
             enc_query_serialized[i][j] = enc_query[i][j].to_bytes()
 
 
@@ -142,20 +140,20 @@ recover_CH_structure = []
 for matrix in windowed_items:
     recover_CH_structure.append(matrix[0][0])
 
-count = [0] * alpha
+count = [0] * ALPHA
 
 g = open('client_set', 'r')
 client_set_entries = g.readlines()
 g.close()
 client_intersection = []
-for j in range(alpha):
-    for i in range(poly_modulus_degree):
+for j in range(ALPHA):
+    for i in range(POLY_MOD):
         if decryptions[j][i] == 0:
             count[j] = count[j] + 1
 
             # The index i is the location of the element in the intersection
             # Here we recover this element from the Cuckoo hash structure
-            PRFed_common_element = reconstruct_item(recover_CH_structure[i], i, hash_seeds[recover_CH_structure[i] % (2 ** log_no_hashes)])
+            PRFed_common_element = reconstruct_item(recover_CH_structure[i], i, HASH_SEEDS[recover_CH_structure[i] % (2 ** LOG_NO_HASHES)])
             index = PRFed_client_set.index(PRFed_common_element)
             client_intersection.append(int(client_set_entries[index][:-1]))
 

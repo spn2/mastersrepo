@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 from math import log2
 
-from parameters import *
+from constants import *
 from auxiliary_functions import power_reconstruct
 from oprf import server_prf_online_parallel
 
@@ -91,35 +91,35 @@ for i in range(1):
 
 
 
-    received_enc_query = [[None for j in range(logB_ell)] for i in range(base - 1)]
-    for i in range(base - 1):
-        for j in range(logB_ell):
-            if ((i + 1) * base ** j - 1 < minibin_capacity):
+    received_enc_query = [[None for j in range(LOG_B_ELL)] for i in range(BASE - 1)]
+    for i in range(BASE - 1):
+        for j in range(LOG_B_ELL):
+            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
                 received_enc_query[i][j] = PyCtxt(pyfhel=HE_server, bytestring=received_enc_query_serialized[i][j])
                 # OLD:
                 # received_enc_query[i][j] = ts.bfv_vector_from(srv_context, received_enc_query_serialized[i][j])
     
     # Here we recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity}), from the encrypted windowing of y.
     # These are needed to compute the polynomial of degree minibin_capacity
-    all_powers = [None for i in range(minibin_capacity)]
-    for i in range(base - 1):
-        for j in range(logB_ell):
-            if ((i + 1) * base ** j - 1 < minibin_capacity):
-                all_powers[(i + 1) * base ** j - 1] = received_enc_query[i][j]
+    all_powers = [None for i in range(MINIBIN_CAP)]
+    for i in range(BASE - 1):
+        for j in range(LOG_B_ELL):
+            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
+                all_powers[(i + 1) * BASE ** j - 1] = received_enc_query[i][j]
 
-    for k in range(minibin_capacity):
+    for k in range(MINIBIN_CAP):
         if all_powers[k] == None:
             all_powers[k] = power_reconstruct(received_enc_query, k + 1)
     all_powers = all_powers[::-1]
 
     # Server sends alpha ciphertexts, obtained from performing dot_product between the polynomial coefficients from the preprocessed server database and all the powers Enc(y), ..., Enc(y^{minibin_capacity})
     srv_answer = []
-    for i in range(alpha):
+    for i in range(ALPHA):
         # the rows with index multiple of (B/alpha+1) have only 1's
         dot_product = all_powers[0]
-        for j in range(1, minibin_capacity):
-            dot_product = dot_product + transposed_poly_coeffs[(minibin_capacity + 1) * i + j] * all_powers[j]
-        dot_product = dot_product + transposed_poly_coeffs[(minibin_capacity + 1) * i + minibin_capacity]
+        for j in range(1, MINIBIN_CAP):
+            dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + j] * all_powers[j]
+        dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + MINIBIN_CAP]
         srv_answer.append(dot_product.to_bytes())
 
     # The answer to be sent to the client is prepared
