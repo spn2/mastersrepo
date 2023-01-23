@@ -6,14 +6,12 @@ import pickle
 from oprf import server_prf_offline_parallel, order_of_generator, G
 from time import time
 
+from auxiliary_functions import *
+
 # key * generator of elliptic curve
 server_point_precomputed = (OPRF_SERVER_KEY % order_of_generator) * G
 
-server_set = []
-f = open('server_set', 'r')
-lines = f.readlines()
-for item in lines:
-    server_set.append(int(item[:-1]))
+server_set = read_file_return_list("server_set")
 
 t0 = time()
 #The PRF function is applied on the set of the server, using parallel computation

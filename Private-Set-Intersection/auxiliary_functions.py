@@ -79,20 +79,14 @@ def coeffs_from_roots(roots, modulus):
         coefficients = np.convolve(coefficients, [1, -r]) % modulus
     return coefficients
 
+
+# 
+
+
 def read_file_return_list(filename):
+    """
+    :param filename: filename to process
+    :return: list of lines from file with newlines stripped off and everything converted to int
+    """
     with open(filename) as f:
         return [int(line.rstrip()) for line in f]
-    
-def read_file_return_list1(filename):
-    lines = []
-    with open(filename) as f:
-        for line in f:
-            lines.append(int(line.rstrip()))
-    return lines
-
-def read_file_return_list2(filename):
-    lines = []
-    with open(filename) as f:
-        while (line := f.readline().rstrip()):
-            lines.append(int(line.rstrip()))
-    return lines

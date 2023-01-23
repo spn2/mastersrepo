@@ -3,9 +3,9 @@ import math
 import mmh3
 
 #parameters
-from parameters import output_bits, number_of_hashes, bin_capacity
-log_no_hashes = int(math.log(number_of_hashes) / math.log(2)) + 1
-mask_of_power_of_2 = 2 ** output_bits - 1
+from constants import *
+log_no_hashes = int(math.log(NUMBER_OF_HASHES) / math.log(2)) + 1
+POW_2_MASK = 2 ** OUTPUT_BITS - 1
 
 
 def left_and_index(item, index):
@@ -15,7 +15,7 @@ def left_and_index(item, index):
     :return: an integer represented as item_left || index
     '''
 
-    return ((item >> (output_bits)) << (log_no_hashes)) + index
+    return ((item >> (OUTPUT_BITS)) << (log_no_hashes)) + index
 
 #The hash family used for simple hashing relies on the Murmur hash family (mmh3)
 
@@ -26,20 +26,20 @@ def location(seed, item):
     :return: Murmur_hash(item_left) xor item_right, where item = item_left || item_right
     '''
 
-    item_left = item >> output_bits
-    item_right = item & mask_of_power_of_2
-    hash_item_left = mmh3.hash(str(item_left), seed, signed=False) >> (32 - output_bits)
+    item_left = item >> OUTPUT_BITS
+    item_right = item & POW_2_MASK
+    hash_item_left = mmh3.hash(str(item_left), seed, signed=False) >> (32 - OUTPUT_BITS)
     return hash_item_left ^ item_right
 
 class Simple_hash():
 
     def __init__(self, hash_seed):
-        self.no_bins = 2 ** output_bits
-        self.simple_hashed_data = [[None for j in range(bin_capacity)] for i in range(self.no_bins)]
+        self.no_bins = 2 ** OUTPUT_BITS
+        self.simple_hashed_data = [[None for j in range(BIN_CAP)] for i in range(self.no_bins)]
         self.occurences = [0 for i in range(self.no_bins)]
         self.FAIL = 0
         self.hash_seed = hash_seed
-        self.bin_capacity = bin_capacity
+        self.bin_capacity = BIN_CAP
 
     #  insert item using hash i on position given by location
     def insert(self, item, i):
