@@ -3,13 +3,14 @@ from simple_hash import Simple_hash
 from auxiliary_functions import coeffs_from_roots
 from math import log2
 import pickle
-from oprf import server_prf_offline_parallel, order_of_generator, G
+from oprf import server_prf_offline_parallel
+from oprf_constants import GENERATOR_ORDER, G
 from time import time
 
 from auxiliary_functions import *
 
 # key * generator of elliptic curve
-server_point_precomputed = (OPRF_SERVER_KEY % order_of_generator) * G
+server_point_precomputed = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G
 
 server_set = read_file_return_list("server_set")
 
@@ -19,7 +20,7 @@ PRFed_server_set = server_prf_offline_parallel(server_set, server_point_precompu
 PRFed_server_set = set(PRFed_server_set)
 t1 = time()
 
-log_no_hashes = int(log2(NUMBER_OF_HASHES)) + 1
+log_no_hashes = int(log2(NUM_OF_HASHES)) + 1
 dummy_msg_server = 2 ** (SIGMA_MAX - OUTPUT_BITS + log_no_hashes) + 1 
 server_size = len(server_set)
 minibin_capacity = int(BIN_CAP / ALPHA)
@@ -28,7 +29,7 @@ number_of_bins = 2 ** OUTPUT_BITS
 # The OPRF-processed database entries are simple hashed
 SH = Simple_hash(HASH_SEEDS)
 for item in PRFed_server_set:
-    for i in range(NUMBER_OF_HASHES):
+    for i in range(NUM_OF_HASHES):
         SH.insert(item, i)
 
 # simple_hashed_data is padded with dummy_msg_server

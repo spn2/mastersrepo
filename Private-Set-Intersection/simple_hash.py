@@ -4,7 +4,7 @@ import mmh3
 
 #parameters
 from constants import *
-log_no_hashes = int(math.log(NUMBER_OF_HASHES) / math.log(2)) + 1
+log_no_hashes = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
 POW_2_MASK = 2 ** OUTPUT_BITS - 1
 
 

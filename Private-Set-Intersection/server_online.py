@@ -1,14 +1,16 @@
-from Pyfhel import Pyfhel, PyCtxt
-import socket
-import pickle
-import numpy as np
 from math import log2
-
-from constants import *
-from auxiliary_functions import power_reconstruct
-from oprf import server_prf_online_parallel
-
+import pickle
+import socket
 from time import time
+
+import numpy as np
+from Pyfhel import Pyfhel, PyCtxt
+
+from auxiliary_functions import power_reconstruct
+from constants import *
+from oprf import server_prf_online_parallel
+from oprf_constants import OPRF_SERVER_KEY
+
 
 serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serv.bind(('localhost', 4470))

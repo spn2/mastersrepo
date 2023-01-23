@@ -6,7 +6,8 @@ from math import log2
 from constants import *
 from cuckoo_hash import reconstruct_item, Cuckoo
 from auxiliary_functions import windowing
-from oprf import order_of_generator, client_prf_online_parallel
+from oprf import client_prf_online_parallel
+from oprf_constants import GENERATOR_ORDER, OPRF_CLIENT_KEY
 
 dummy_msg_client = 2 ** (SIGMA_MAX - OUTPUT_BITS + LOG_NO_HASHES)
 
@@ -58,7 +59,7 @@ t0 = time()
 server_to_client_communication_oprf = len(PRFed_encoded_client_set_serialized)
 
 # We finalize the OPRF processing by applying the inverse of the secret key, oprf_client_key
-key_inverse = pow(OPRF_CLIENT_KEY, -1, order_of_generator)
+key_inverse = pow(OPRF_CLIENT_KEY, -1, GENERATOR_ORDER)
 PRFed_client_set = client_prf_online_parallel(key_inverse, PRFed_encoded_client_set)
 print(' * OPRF protocol done!')
 

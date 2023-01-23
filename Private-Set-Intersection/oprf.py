@@ -1,14 +1,14 @@
-from fastecdsa.curve import P192
-from fastecdsa.point import Point
 from multiprocessing import Pool
+
+from fastecdsa.point import Point
+
 from oprf_constants import *
 
-
-def server_prf_offline(vector_of_items_and_point): #used as a subroutine for server_prf_offline_paralel
+def server_prf_offline(vector_of_items_and_point):
 	vector_of_items = vector_of_items_and_point[0]
 	point = vector_of_items_and_point[1]
 	vector_of_multiples = [item * point for item in vector_of_items]
-	return [(Q.x >> log_p - SIGMA_MAX - 10) & MASK for Q in vector_of_multiples]
+	return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in vector_of_multiples]
 
 def server_prf_offline_parallel(vector_of_items, point):
 	'''
@@ -42,7 +42,7 @@ def server_prf_online_parallel(key, vector_of_pairs):
 	:param vector_of_pairs: vector of coordinates of some points P on the elliptic curve
 	:return: vector of coordinates of points key * P on the elliptic curve
 	'''
-	vector_of_points = [Point(P[0], P[1], curve=curve_used) for P in vector_of_pairs]
+	vector_of_points = [Point(P[0], P[1], curve=CURVE) for P in vector_of_pairs]
 	division = int(len(vector_of_points) / NUM_OF_PROCESSES)
 	inputs = [vector_of_points[i * division: (i+1) * division] for i in range(NUM_OF_PROCESSES)]
 	if len(vector_of_points) % NUM_OF_PROCESSES != 0:
@@ -59,20 +59,20 @@ def server_prf_online_parallel(key, vector_of_pairs):
 def client_prf_offline(item, point):
 	'''
 	:param item: an integer
-	:param point: a point on elliptic curve  (ex. in the protocol point = key * G)
+	:param point: a point on elliptic curve (ex. in the protocol point = key * G)
 	:return: coordinates of item * point (ex. in the protocol it computes key * item * G)
 	'''
 	P = item * point
 	x_item = P.x
 	y_item = P.y
-	return [x_item, y_item]
+	return (x_item, y_item)
 
 def client_prf_online(keyed_vector_of_pairs):
 	key_inverse = keyed_vector_of_pairs[0]
 	vector_of_pairs = keyed_vector_of_pairs[1]
-	vector_of_points = [Point(pair[0],pair[1], curve=curve_used) for pair in vector_of_pairs]
+	vector_of_points = [Point(pair[0],pair[1], curve=CURVE) for pair in vector_of_pairs]
 	vector_key_inverse_points = [key_inverse * PP for PP in vector_of_points]
-	return [(Q.x >> log_p - SIGMA_MAX - 10) & MASK for Q in vector_key_inverse_points]
+	return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in vector_key_inverse_points]
 
 def client_prf_online_parallel(key_inverse, vector_of_pairs):
 	vector_of_pairs = vector_of_pairs

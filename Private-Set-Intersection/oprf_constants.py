@@ -1,15 +1,22 @@
+from math import log2
+
 from fastecdsa.curve import P192
 from fastecdsa.point import Point
-from math import log2
+
 from constants import SIGMA_MAX
 
 MASK = 2 ** SIGMA_MAX - 1
 
+# for parallel computation
 NUM_OF_PROCESSES = 4
 
 # Curve parameters
-curve_used = P192
-prime_of_curve_equation = curve_used.p
-order_of_generator = curve_used.q
-log_p = int(log2(prime_of_curve_equation)) + 1
-G = Point(curve_used.gx, curve_used.gy, curve=curve_used) #generator of the curve_used
+CURVE = P192
+prime_of_curve_equation = CURVE.p
+GENERATOR_ORDER = CURVE.q
+LOG_P = int(log2(prime_of_curve_equation)) + 1
+G = Point(CURVE.gx, CURVE.gy, curve=CURVE) #generator of the CURVE
+
+# OPRF keys
+OPRF_CLIENT_KEY = 12345678910111213141516171819222222222222
+OPRF_SERVER_KEY = 1234567891011121314151617181920
