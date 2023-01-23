@@ -18,10 +18,10 @@ PLAIN_MOD = 536903681
 POLY_MOD = 2 ** 13
 
 # the number of hashes we use for simple/Cuckoo hashing
-NUMBER_OF_HASHES = 3
+NUM_OF_HASHES = 3
 
 # length of the database items
-SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUMBER_OF_HASHES)) + 1) 
+SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUM_OF_HASHES)) + 1) 
 
 # B = [68, 176, 536, 1832, 6727] for log(server_size) = [16, 18, 20, 22, 24]
 BIN_CAP = 536
@@ -34,11 +34,10 @@ ELL = 2
 
 # write about these
 ##############################################################################################################
-LOG_NO_HASHES = int(log2(NUMBER_OF_HASHES)) + 1
+LOG_NO_HASHES = int(log2(NUM_OF_HASHES)) + 1
 BASE = 2 ** ELL
 MINIBIN_CAP = int(BIN_CAP/ALPHA)
 LOG_B_ELL = int(log2(MINIBIN_CAP/ELL)) + 1 # <= 2 ** HE.depth
-
 
 # OPRF keys
 OPRF_CLIENT_KEY = 12345678910111213141516171819222222222222
