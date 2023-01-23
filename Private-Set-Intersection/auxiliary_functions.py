@@ -1,11 +1,6 @@
 from math import log2
 import numpy as np
-from constants import ell, plain_modulus, bin_capacity, alpha
-
-base = 2 ** ell
-minibin_capacity = int(bin_capacity / alpha)# minibin_capacity = B / alpha
-logB_ell = int(log2(minibin_capacity) / ell) + 1 # <= 2 ** HE.depth = 16  
-t = plain_modulus
+from constants import *
 
 def int2base(n, b):
     '''
@@ -48,7 +43,7 @@ def power_reconstruct(window, exponent):
     :param: exponent: an integer, will be an exponent <= logB_ell
     :return: y ** exponent
     '''
-    e_base_coef = int2base(exponent, base)
+    e_base_coef = int2base(exponent, BASE)
     necessary_powers = [] #len(necessary_powers) <= 2 ** HE.depth 
     j = 0
     for x in e_base_coef:
@@ -65,11 +60,11 @@ def windowing(y, bound, modulus):
     :param modulus: a modulus integer
     :return: a matrix associated to y, where we put y ** (i+1)*base ** j mod modulus in the (i,j) entry, as long as the exponent of y is smaller than some bound
     '''
-    windowed_y = [[None for j in range(logB_ell)] for i in range(base-1)]
-    for j in range(logB_ell):
-        for i in range(base-1):
-            if ((i+1) * base ** j - 1 < bound):
-                windowed_y[i][j] = pow(y, (i+1) * base ** j, modulus)
+    windowed_y = [[None for j in range(LOG_B_ELL)] for i in range(BASE-1)]
+    for j in range(LOG_B_ELL):
+        for i in range(BASE-1):
+            if ((i+1) * BASE ** j - 1 < bound):
+                windowed_y[i][j] = pow(y, (i+1) * BASE ** j, modulus)
     return windowed_y
 
 
