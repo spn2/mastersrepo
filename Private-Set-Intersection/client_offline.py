@@ -9,11 +9,7 @@ t0 = time()
 client_point_precomputed = (OPRF_CLIENT_KEY % order_of_generator) * G
 
 client_set = []
-f = open('client_set', 'r')
-lines = f.readlines()
-for item in lines:
-	client_set.append(int(item[:-1]))
-f.close()
+
 
 # OPRF layer: encode the client's set as elliptic curve points.
 encoded_client_set = [client_prf_offline(item, client_point_precomputed) for item in client_set]
