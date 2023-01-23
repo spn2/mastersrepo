@@ -3,7 +3,6 @@ from oprf import client_prf_offline, order_of_generator, G
 from time import time
 from constants import OPRF_CLIENT_KEY
 
-# client's PRF secret key (a value from range(order_of_generator))
 t0 = time()
 
 # key * generator of elliptic curve

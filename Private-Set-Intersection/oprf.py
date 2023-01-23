@@ -2,9 +2,9 @@ from fastecdsa.curve import P192
 from fastecdsa.point import Point
 from math import log2
 from multiprocessing import Pool
-from parameters import sigma_max
+from constants import SIGMA_MAX
 
-mask = 2 ** sigma_max - 1
+mask = 2 ** SIGMA_MAX - 1
 
 number_of_processes = 4
 
@@ -19,7 +19,7 @@ def server_prf_offline(vector_of_items_and_point): #used as a subroutine for ser
 	vector_of_items = vector_of_items_and_point[0]
 	point = vector_of_items_and_point[1]
 	vector_of_multiples = [item * point for item in vector_of_items]
-	return [(Q.x >> log_p - sigma_max - 10) & mask for Q in vector_of_multiples]
+	return [(Q.x >> log_p - SIGMA_MAX - 10) & mask for Q in vector_of_multiples]
 
 def server_prf_offline_parallel(vector_of_items, point):
 	'''
@@ -83,7 +83,7 @@ def client_prf_online(keyed_vector_of_pairs):
 	vector_of_pairs = keyed_vector_of_pairs[1]
 	vector_of_points = [Point(pair[0],pair[1], curve=curve_used) for pair in vector_of_pairs]
 	vector_key_inverse_points = [key_inverse * PP for PP in vector_of_points]
-	return [(Q.x >> log_p - sigma_max - 10) & mask for Q in vector_key_inverse_points]
+	return [(Q.x >> log_p - SIGMA_MAX - 10) & mask for Q in vector_key_inverse_points]
 
 def client_prf_online_parallel(key_inverse, vector_of_pairs):
 	vector_of_pairs = vector_of_pairs
