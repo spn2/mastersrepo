@@ -1,13 +1,12 @@
-from constants import *
-from simple_hash import Simple_hash
-from auxiliary_functions import coeffs_from_roots
 from math import log2
 import pickle
-from oprf import server_prf_offline_parallel
-from oprf_constants import GENERATOR_ORDER, G
+from simple_hash import Simple_hash
 from time import time
 
-from auxiliary_functions import *
+from auxiliary_functions import coeffs_from_roots, read_file_return_list
+from constants import *
+from oprf import server_prf_offline_parallel
+from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
 
 # key * generator of elliptic curve
 server_point_precomputed = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G

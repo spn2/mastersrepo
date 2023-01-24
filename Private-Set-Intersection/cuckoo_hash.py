@@ -1,14 +1,14 @@
-from random import randint 
 import math
+from random import randint 
+
+# The hash family used for Cuckoo hashing relies on the Murmur hash family (mmh3)
 import mmh3
 
-#parameters
 from constants import OUTPUT_BITS, NUM_OF_HASHES
-mask_of_power_of_2 = 2 ** OUTPUT_BITS - 1
-log_no_hashes = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
 
+POW_2_MASK = 2 ** OUTPUT_BITS - 1
+LOG_NO_HASHES = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
 
-#The hash family used for Cuckoo hashing relies on the Murmur hash family (mmh3)
 
 def location(seed, item):
 	'''
@@ -17,24 +17,24 @@ def location(seed, item):
 	:return: Murmur_hash(item_left) xor item_right, where item = item_left || item_right
 	'''
 	item_left = item >> OUTPUT_BITS
-	item_right = item & mask_of_power_of_2
+	item_right = item & POW_2_MASK
 	hash_item_left = mmh3.hash(str(item_left), seed, signed=False) >> (32 - OUTPUT_BITS)
 	return hash_item_left ^ item_right
 
 def left_and_index(item, index): 
 	'''
 	:param item: an integer
-	:param index: a log_no_hashes bits integer
+	:param index: a LOG_NO_HASHES bits integer
 	:return: an integer represented as item_left || index 
 	'''
-	return ((item >> (OUTPUT_BITS)) << (log_no_hashes)) + index 	
+	return ((item >> (OUTPUT_BITS)) << (LOG_NO_HASHES)) + index 	
 
 def extract_index(item_left_and_index): 
 	'''
 	:param item_left_and_index: an integer represented as item_left || index
 	:return: index extracted
 	'''
-	return item_left_and_index & (2 ** log_no_hashes - 1) 
+	return item_left_and_index & (2 ** LOG_NO_HASHES - 1) 
 
 def reconstruct_item(item_left_and_index, current_location, seed):
 	'''
@@ -43,7 +43,7 @@ def reconstruct_item(item_left_and_index, current_location, seed):
 	:param seed: the seed of the Murmur hash function
 	:return: the integer item
 	'''
-	item_left = item_left_and_index >> log_no_hashes
+	item_left = item_left_and_index >> LOG_NO_HASHES
 	hashed_item_left = mmh3.hash(str(item_left), seed, signed=False) >> (32 - OUTPUT_BITS)
 	item_right = hashed_item_left ^ current_location
 	return (item_left << OUTPUT_BITS) + item_right
