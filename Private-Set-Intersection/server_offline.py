@@ -11,19 +11,18 @@ from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
 # key * generator of elliptic curve
 server_point_precomputed = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G
 
+# store server's set in memory 
 server_set = read_file_return_list("server_set")
 
 t0 = time()
 #The PRF function is applied on the set of the server, using parallel computation
 PRFed_server_set = server_prf_offline_parallel(server_set, server_point_precomputed)
+print(len(PRFed_server_set))
 PRFed_server_set = set(PRFed_server_set)
+print(len(PRFed_server_set))
 t1 = time()
 
-log_no_hashes = int(log2(NUM_OF_HASHES)) + 1
-dummy_msg_server = 2 ** (SIGMA_MAX - OUTPUT_BITS + log_no_hashes) + 1 
-server_size = len(server_set)
-minibin_capacity = int(BIN_CAP / ALPHA)
-number_of_bins = 2 ** OUTPUT_BITS
+MSG_PADDING = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(log2(NUM_OF_HASHES)) + 1) + 1 
 
 # The OPRF-processed database entries are simple hashed
 SH = Simple_hash(HASH_SEEDS)
@@ -31,11 +30,11 @@ for item in PRFed_server_set:
     for i in range(NUM_OF_HASHES):
         SH.insert(item, i)
 
-# simple_hashed_data is padded with dummy_msg_server
-for i in range(number_of_bins):
+# simple_hashed_data is padded with MSG_PADDING
+for i in range(NUM_OF_BINS):
     for j in range(BIN_CAP):
         if SH.simple_hashed_data[i][j] == None:
-            SH.simple_hashed_data[i][j] = dummy_msg_server
+            SH.simple_hashed_data[i][j] = MSG_PADDING
 
 # Here we perform the partitioning:
 # Namely, we partition each bin into alpha minibins with B/alpha items each
@@ -44,11 +43,11 @@ for i in range(number_of_bins):
 t2 = time()
 
 poly_coeffs = []
-for i in range(number_of_bins):
+for i in range(NUM_OF_BINS):
     # we create a list of coefficients of all minibins from concatenating the list of coefficients of each minibin
     coeffs_from_bin = []
     for j in range(ALPHA):
-        roots = [SH.simple_hashed_data[i][minibin_capacity * j + r] for r in range(minibin_capacity)]
+        roots = [SH.simple_hashed_data[i][MINIBIN_CAP * j + r] for r in range(MINIBIN_CAP)]
         coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, PLAIN_MOD).tolist()
     poly_coeffs.append(coeffs_from_bin)
 

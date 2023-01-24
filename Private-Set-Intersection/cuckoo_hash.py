@@ -4,7 +4,7 @@ from random import randint
 # The hash family used for Cuckoo hashing relies on the Murmur hash family (mmh3)
 import mmh3
 
-from constants import OUTPUT_BITS, NUM_OF_HASHES
+from constants import OUTPUT_BITS, NUM_OF_HASHES, NUM_OF_BINS
 
 POW_2_MASK = 2 ** OUTPUT_BITS - 1
 LOG_NO_HASHES = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
@@ -62,7 +62,7 @@ def rand_point(bound, i):
 class Cuckoo():
 
 	def __init__(self, hash_seed):
-		self.number_of_bins = 2 ** OUTPUT_BITS
+		self.number_of_bins = NUM_OF_BINS
 		self.recursion_depth = int(8 * math.log(self.number_of_bins) / math.log(2))
 		self.data_structure = [None for j in range(self.number_of_bins)]
 		self.insert_index = randint(0, NUM_OF_HASHES - 1)

@@ -12,6 +12,7 @@ HASH_SEEDS = [123456789, 10111213141516, 17181920212223]
 # output_bits = number of bits of output of the hash functions
 # number of bins for simple/Cuckoo Hashing = 2 ** output_bits
 OUTPUT_BITS = 13
+NUM_OF_BINS = 2 ** OUTPUT_BITS
 
 # encryption parameters of the BFV scheme: the plain modulus and the polynomial modulus degree
 PLAIN_MOD = 536903681
@@ -25,6 +26,7 @@ SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUM_OF_HASHES)) + 1)
 
 # B = [68, 176, 536, 1832, 6727] for log(server_size) = [16, 18, 20, 22, 24]
 BIN_CAP = 536
+
 
 # partitioning parameter
 ALPHA = 16
