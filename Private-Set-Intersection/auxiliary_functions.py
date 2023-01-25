@@ -90,3 +90,24 @@ def read_file_return_list(filename):
     """
     with open(filename) as f:
         return [int(line.rstrip()) for line in f]
+
+# [0,1,..9] is split into [0,1,2], [3,4,5], [6,7,8], [9]
+def split_list_into_parts(items, n):
+    """
+    :param items: object of items to split
+    :param n: the number of lists for the items to be sent into
+    :return: list of n lists containing the objects from items 
+    """
+
+    split_lists = []
+
+    q = int(len(items)/n)
+
+    for i in range(0, int(len(items)/q)):
+        split_lists.append(items[i*q:(i+1)*q])
+
+    # put remainder in own list
+    if len(items[q*(1+i):]) > 0:
+        split_lists.append(items[q*(1+i):])
+
+    return split_lists

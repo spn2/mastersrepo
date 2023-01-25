@@ -1,12 +1,12 @@
 from math import log2
 import pickle
-from simple_hash import Simple_hash
 from time import time
 
 from auxiliary_functions import coeffs_from_roots, read_file_return_list
 from constants import *
 from oprf import server_prf_offline_parallel
 from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
+from simple_hash import Simple_hash
 
 # simple_hashed_data is padded with MSG_PADDING
 MSG_PADDING = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(log2(NUM_OF_HASHES)) + 1) + 1

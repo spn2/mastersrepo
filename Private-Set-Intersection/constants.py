@@ -6,6 +6,9 @@ SERVER_SIZE = 2 ** 20
 CLIENT_SIZE = 4000
 INTERSECTION_SIZE = 3500
 
+# the number of hashes we use for simple/Cuckoo hashing
+NUM_OF_HASHES = 3
+
 # seeds used by both the Server and the Client for the Murmur hash functions
 HASH_SEEDS = [123456789, 10111213141516, 17181920212223]
 
@@ -17,9 +20,6 @@ NUM_OF_BINS = 2 ** OUTPUT_BITS
 # encryption parameters of the BFV scheme: the plain modulus and the polynomial modulus degree
 PLAIN_MOD = 536903681
 POLY_MOD = 2 ** 13
-
-# the number of hashes we use for simple/Cuckoo hashing
-NUM_OF_HASHES = 3
 
 # length of the database items
 SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUM_OF_HASHES)) + 1) 

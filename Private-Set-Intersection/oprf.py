@@ -2,6 +2,7 @@ from multiprocessing import Pool
 
 from fastecdsa.point import Point
 
+from auxiliary_functions import split_list_into_parts
 from oprf_constants import *
 
 def server_prf_offline(vector_of_items_and_point):
@@ -16,11 +17,15 @@ def server_prf_offline_parallel(vector_of_items, point):
 	:param point: a point on elliptic curve (it will be key * G)
 	:return: a sigma_max bits integer from the first coordinate of item * point (this will be the same as item * key * G)
 	'''
-	division = int(len(vector_of_items) / NUM_OF_PROCESSES)
-	inputs = [vector_of_items[i * division: (i+1) * division] for i in range(NUM_OF_PROCESSES)]
+
+	items_per_process = int(len(vector_of_items) / NUM_OF_PROCESSES)
+	# list of lists where each list is a set of items to be handled by a process
+	process_items = [vector_of_items[i * items_per_process: (i+1) * items_per_process] for i in range(NUM_OF_PROCESSES)]
+	
 	if len(vector_of_items) % NUM_OF_PROCESSES != 0:
-		inputs.append(vector_of_items[NUM_OF_PROCESSES * division: NUM_OF_PROCESSES * division + (len(vector_of_items) % NUM_OF_PROCESSES)])
-	inputs_and_point = [(input_vec, point) for input_vec in inputs]
+		process_items.append(vector_of_items[NUM_OF_PROCESSES * items_per_process: NUM_OF_PROCESSES * items_per_process + (len(vector_of_items) % NUM_OF_PROCESSES)])
+	
+	inputs_and_point = [(input_vec, point) for input_vec in process_items]
 	outputs = []
 	with Pool(NUM_OF_PROCESSES) as p:
 		outputs = p.map(server_prf_offline, inputs_and_point)	
