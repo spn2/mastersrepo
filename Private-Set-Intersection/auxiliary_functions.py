@@ -91,9 +91,10 @@ def read_file_return_list(filename):
     with open(filename) as f:
         return [int(line.rstrip()) for line in f]
 
-# split_list_into_parts([0,1,..9], 3) is split into [0,1,2], [3,4,5], [6,7,8], [9]
 def split_list_into_parts(items, n):
     """
+    Example: split_list_into_parts([0,1,2,3,4,5,6,7,8,9], 3) is split into [0,1,2], [3,4,5], [6,7,8], [9]
+
     :param items: object of items to split
     :param n: the number of lists for the items to be sent into
     :return: list of n lists containing the objects from items 
@@ -121,3 +122,15 @@ def unpack_list_of_lists(lists):
     for l in lists:
         unpacked += l
     return unpacked
+
+def multiply_items_by_point(items_with_point):
+    """
+    :param items_with_point: list with items (first index) and point (on an elliptic curve)
+                             (second index)
+    :return: list of items multiplied by point
+    """
+
+    item_list = items_with_point[0]
+    p = items_with_point[1]
+
+    return [item * p for item in item_list]

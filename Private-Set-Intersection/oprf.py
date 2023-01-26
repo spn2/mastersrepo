@@ -2,7 +2,7 @@ from multiprocessing import Pool
 
 from fastecdsa.point import Point
 
-from auxiliary_functions import split_list_into_parts, unpack_list_of_lists
+from auxiliary_functions import split_list_into_parts, unpack_list_of_lists, multiply_items_by_point
 from oprf_constants import *
 
 def server_prf_offline(vector_of_items_and_point):
@@ -21,9 +21,7 @@ def server_prf_offline(vector_of_items_and_point):
              bits taken from the first coordinate
     """
 
-    item_list = vector_of_items_and_point[0]
-    p = vector_of_items_and_point[1]
-    items_time_point = [item * p for item in item_list]
+    items_time_point = multiply_items_by_point(vector_of_items_and_point)
 
     return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in items_time_point]
 
@@ -33,7 +31,8 @@ def server_prf_offline_parallel(vector_of_items, point):
     
     Takes a list of items as input, then splits them into NUM_OF_PROCESSES lists.
     Runs server_prf_offline in parallel on each list, then merges and returns the
-    result.
+    result. The point is appended along with each list as a way to send it to the
+    subrotuine server_prf_offline.
 
     :param vector_of_items: a vector of integers
     :param point: a point on elliptic curve (it will be key * generator)
@@ -45,7 +44,6 @@ def server_prf_offline_parallel(vector_of_items, point):
     process_items = split_list_into_parts(vector_of_items, NUM_OF_PROCESSES)
     inputs_and_point = [(input_vec, point) for input_vec in process_items]
     
-    # send lists to NUM_OF_PROCESSES processes, run server_prf_offline on the lists, merge and return result
     outputs = []
     with Pool(NUM_OF_PROCESSES) as p:
         outputs = p.map(server_prf_offline, inputs_and_point)	
@@ -86,9 +84,8 @@ def client_prf_offline(item, point):
     :return: coordinates of item * point (ex. in the protocol it computes key * item * G)
     '''
     P = item * point
-    x_item = P.x
-    y_item = P.y
-    return (x_item, y_item)
+    print(type(P))
+    return (P.x, P.y)
 
 def client_prf_online(keyed_vector_of_pairs):
     key_inverse = keyed_vector_of_pairs[0]
