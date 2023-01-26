@@ -77,15 +77,6 @@ def server_prf_online_parallel(key, vector_of_pairs):
         final_output = final_output + output_vector
     return final_output
 
-def client_prf_offline(item, point):
-    '''
-    :param item: an integer
-    :param point: a point on elliptic curve (ex. in the protocol point = key * G)
-    :return: coordinates of item * point (ex. in the protocol it computes key * item * G)
-    '''
-    P = item * point
-    print(type(P))
-    return (P.x, P.y)
 
 def client_prf_online(keyed_vector_of_pairs):
     key_inverse = keyed_vector_of_pairs[0]

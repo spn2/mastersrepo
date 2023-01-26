@@ -16,9 +16,8 @@ if __name__ == "__main__":
     # store client's set in memory 
     client_set = read_file_return_list("client_set")
 
-    # OPRF layer: encode the client's set as elliptic curve points.
-    encoded_client_set = [client_prf_offline(item, client_point_precomputed) for item in client_set]
-    print(type(encoded_client_set[0][0]))
+    # Client's items are encoded on the elliptic curve, retrieve the x and y coords of each point (item)
+    encoded_client_set = [(point.x, point.y) for point in multiply_items_by_point((client_set, client_point_precomputed))]
 
     # write the preprocessed client's set to disk
     g = open('client_preprocessed', 'wb')
