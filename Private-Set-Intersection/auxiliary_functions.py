@@ -1,6 +1,9 @@
 from math import log2
+from multiprocessing import Pool
 import numpy as np
+
 from constants import *
+from oprf import NUM_OF_PROCESSES
 
 def int2base(n, b):
     '''
@@ -134,3 +137,19 @@ def multiply_items_by_point(items_with_point):
     p = items_with_point[1]
 
     return [item * p for item in item_list]
+
+def parallelize_function_on_lists(func, lists):
+    """"
+    Uses the multiprocessing library's Pool object to run
+    func on each list in lists. 
+
+    :param func: function that takes a list as input and returns a list as output.
+    :param lists: list of lists.
+    :return: the aggregated lists from func as a single list. 
+    """
+
+    outputs = []
+    with Pool(NUM_OF_PROCESSES) as p:
+        outputs = p.map(func, lists)	
+    # outputs consists of a list of lists
+    return unpack_list_of_lists(outputs)
