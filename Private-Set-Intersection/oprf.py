@@ -43,7 +43,7 @@ def server_prf_offline_parallel(vector_of_items, point):
     process_items = split_list_into_parts(vector_of_items, NUM_OF_PROCESSES)
     inputs_and_point = [(input_vec, point) for input_vec in process_items]
     
-    return parallelize_function_on_lists(inputs_and_point)
+    return parallelize_function_on_lists(server_prf_online, inputs_and_point)
 
 def server_prf_online(keyed_vector_of_points):
     """
@@ -53,7 +53,7 @@ def server_prf_online(keyed_vector_of_points):
     return [[P.x, P.y] for P in multiplied_points]
 
 
-def server_prf_online_parallel(key, vector_of_pairs):
+def server_prf_online_parallel(vector_of_pairs, key):
     '''
     :param key: an integer
     :param vector_of_pairs: vector of coordinates of some points P on the elliptic curve
@@ -63,9 +63,9 @@ def server_prf_online_parallel(key, vector_of_pairs):
 
     inputs = split_list_into_parts(vector_of_points, NUM_OF_PROCESSES)
 
-    keyed_inputs = [(key, _) for _ in inputs]
+    keyed_inputs = [(_, key) for _ in inputs]
 
-    return parallelize_function_on_lists(keyed_inputs)
+    return parallelize_function_on_lists(server_prf_online, keyed_inputs)
 
 def client_prf_online(keyed_vector_of_pairs):
     key_inverse = keyed_vector_of_pairs[0]

@@ -35,7 +35,7 @@ for i in range(1):
     encoded_client_set = pickle.loads(encoded_client_set_serialized)
     t0 = time()
     # The server computes (parallel computation) the online part of the OPRF protocol, using its own secret key
-    PRFed_encoded_client_set = server_prf_online_parallel(OPRF_SERVER_KEY, encoded_client_set)
+    PRFed_encoded_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
     PRFed_encoded_client_set_serialized = pickle.dumps(PRFed_encoded_client_set, protocol=None)
     L = len(PRFed_encoded_client_set_serialized)
     sL = str(L) + ' ' * (10 - len(str(L))) #pad len to 10 bytes

@@ -136,6 +136,9 @@ def multiply_items_by_point(items_with_point):
     item_list = items_with_point[0]
     p = items_with_point[1]
 
+    print(type(item_list))
+    print(type(p))
+
     return [item * p for item in item_list]
 
 def parallelize_function_on_lists(func, lists):
