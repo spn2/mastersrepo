@@ -3,7 +3,7 @@ from multiprocessing import Pool
 import numpy as np
 
 from constants import *
-from oprf import NUM_OF_PROCESSES
+from oprf_constants import NUM_OF_PROCESSES
 
 def int2base(n, b):
     '''
