@@ -60,7 +60,7 @@ server_to_client_communication_oprf = len(PRFed_encoded_client_set_serialized)
 
 # We finalize the OPRF processing by applying the inverse of the secret key, oprf_client_key
 key_inverse = pow(OPRF_CLIENT_KEY, -1, GENERATOR_ORDER)
-PRFed_client_set = client_prf_online_parallel(key_inverse, PRFed_encoded_client_set)
+PRFed_client_set = client_prf_online_parallel(PRFed_encoded_client_set, key_inverse)
 print(' * OPRF protocol done!')
 
 # Each PRFed item from the client set is mapped to a Cuckoo hash table

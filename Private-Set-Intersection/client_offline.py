@@ -2,7 +2,6 @@ import pickle
 from time import time
 
 from auxiliary_functions import *
-from oprf import client_prf_offline
 from oprf_constants import GENERATOR_ORDER, G, OPRF_CLIENT_KEY
 
 

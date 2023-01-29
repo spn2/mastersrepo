@@ -2,83 +2,108 @@ from multiprocessing import Pool
 
 from fastecdsa.point import Point
 
-from auxiliary_functions import split_list_into_parts, unpack_list_of_lists, multiply_items_by_point, parallelize_function_on_lists
+from auxiliary_functions import split_list_into_parts, multiply_items_by_point, parallelize_function_on_lists
 from oprf_constants import *
 
-def server_prf_offline(vector_of_items_and_point):
+def server_prf_offline(list_of_items_and_point):
     """
     Takes a list of items and processes them by multiplying each item with a point
-    from an elliptic curve. This point will be equal to the server's key * the elliptic
-    curve's generator. SIGMA_MAX bits are taken from the first coordinate of the resulting
+    from an elliptic curve (EC). This point will be equal to the server's key * the EC's generator.
+    SIGMA_MAX bits are taken from the first coordinate of the resulting
     operation on each item, appended to a list, then returned.
 
-    The first coordinate of vector_of_items_and_point should be the list of items, whereas
-    the second should be the point on the elliptic curve.
+    The first coordinate of list_of_items_and_point should be the list of items, whereas
+    the second should be the point on the EC.
 
-    :param vector_of_items_and_point: list of server items and a point (key * generator)
-                                      on the elliptic curve
+    :param list_of_items_and_point: list of server items and a point (key * generator)
+                                      on the EC
     :return: server items multiplied by the point (key * generator), with SIGMA_MAX
              bits taken from the first coordinate
     """
 
-    items_time_point = multiply_items_by_point(vector_of_items_and_point)
+    items_time_point = multiply_items_by_point(list_of_items_and_point)
 
     return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in items_time_point]
 
-def server_prf_offline_parallel(vector_of_items, point):
+
+def server_prf_offline_parallel(item_list, point):
     '''
-    
     Takes a list of items as input, then splits them into NUM_OF_PROCESSES lists.
     Runs server_prf_offline in parallel on each list, then merges and returns the
     result. The point is appended along with each list as a way to send it to the
     subrotuine server_prf_offline.
 
-    :param vector_of_items: a vector of integers
-    :param point: a point on elliptic curve (it will be key * generator)
+    :param item_list: a list of integers
+    :param point: a point on EC (it will be key * generator)
     :return: a sigma_max bits integer from the first coordinate of item * point
              (this will be the same as item * key * G)
     '''
 
     # split up list, add point along with each of the new lists as a way to pass the point to each process
-    process_items = split_list_into_parts(vector_of_items, NUM_OF_PROCESSES)
+    process_items = split_list_into_parts(item_list, NUM_OF_PROCESSES)
     inputs_and_point = [(input_vec, point) for input_vec in process_items]
     
     return parallelize_function_on_lists(server_prf_online, inputs_and_point)
 
-def server_prf_online(keyed_vector_of_points):
+
+def server_prf_online(points_with_key):
     """
-    #used as a subroutine in server_prf_online_paralel
+    :param points_with_key: sever's PRF-encoded items (first index) and key (second index)
+    :return: X and Y coordinates (as integers) of the server's PRF-encoded items multiplied
+             by the key (second index of points_with_key)
     """
-    multiplied_points = multiply_items_by_point(keyed_vector_of_points)
+    multiplied_points = multiply_items_by_point(points_with_key)
     return [[P.x, P.y] for P in multiplied_points]
 
 
-def server_prf_online_parallel(vector_of_pairs, key):
+def server_prf_online_parallel(prf_list, key):
     '''
-    :param key: an integer
-    :param vector_of_pairs: vector of coordinates of some points P on the elliptic curve
-    :return: vector of coordinates of points key * P on the elliptic curve
+    :param prf_list: list consisting of the server's PRF encoded items, represented
+                     as integer X and Y coordinates
+    :param key: server's key on the EC CURVE (see oprf_constants.py)
+    :return: list of coordinates of points key * P on the EC CURVE
     '''
-    vector_of_points = [Point(P[0], P[1], curve=CURVE) for P in vector_of_pairs]
 
-    inputs = split_list_into_parts(vector_of_points, NUM_OF_PROCESSES)
+    # X and Y coordinates into actual points on the EC
+    list_of_points = [Point(P[0], P[1], curve=CURVE) for P in prf_list]
 
-    keyed_inputs = [(_, key) for _ in inputs]
+    # prepare lists for each process (for multiprocessing)
+    inputs = split_list_into_parts(list_of_points, NUM_OF_PROCESSES)
 
-    return parallelize_function_on_lists(server_prf_online, keyed_inputs)
+    # add key to each list so each process has access to it
+    inputs_with_key = [(_, key) for _ in inputs]
 
-def client_prf_online(keyed_vector_of_pairs):
-    key_inverse = keyed_vector_of_pairs[0]
-    vector_of_pairs = keyed_vector_of_pairs[1]
-    vector_of_points = [Point(pair[0],pair[1], curve=CURVE) for pair in keyed_vector_of_pairs[1]]
-    vector_key_inverse_points = [key_inverse * PP for PP in vector_of_points]
-    return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in vector_key_inverse_points]
+    return parallelize_function_on_lists(server_prf_online, inputs_with_key)
 
-def client_prf_online_parallel(key_inverse, vector_of_pairs):
 
-    inputs = split_list_into_parts(vector_of_pairs, NUM_OF_PROCESSES)
+def client_prf_online(key_coord_list):
+    """
+    :param coord_key_list: list consisting of the inverse of theclient's key plus a list of X and Y coordinates
+                           (as integers) of points belonging to the EC CURVE (see oprf_constants.py) representing
+                           the client's encoded items
+    :return: client items multiplied by the point (key * generator), with SIGMA_MAX bits taken from the first coordinate
+    """
+
+    # reconstruct the the points on the curve based on the given X and Y coords (coord_key_list[1])
+    list_of_points = [Point(pair[0],pair[1], curve=CURVE) for pair in key_coord_list[1]]
+
+    # multiply the inverse of the key (key_coord_list[0]) with all the points
+    points_time_inversekey = [key_coord_list[0] * PP for PP in list_of_points]
+
+    # return SIGMA_MAX bits from first coordinate
+    return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in points_time_inversekey]
+
+
+def client_prf_online_parallel(inv_key, prf_list):
+    """
+    :param inv_key: inverse of secret key
+    :param prf_list: the PRF-encoded client set
+    :return: inverse of the the secret key (inv_key) applied to the PRF-encoded client set
+    """
+
+    inputs = split_list_into_parts(prf_list, NUM_OF_PROCESSES)
         
-    keyed_inputs = [(key_inverse, _) for _ in inputs]		
+    keyed_inputs = [(inv_key, _) for _ in inputs]
 
     return parallelize_function_on_lists(client_prf_online, keyed_inputs)
 
