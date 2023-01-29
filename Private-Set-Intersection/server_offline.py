@@ -16,11 +16,14 @@ if __name__ == "__main__":
     # store server's set in memory 
     server_set = read_file_return_list("server_set")
 
-    # key * generator of elliptic curve
-    server_point_precomputed = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G
+    # key * generator of elliptic curve (EC)
+    key_gen_point = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G
 
     t0 = time()
-    PRFed_server_set = set(server_prf_offline_parallel(server_set, server_point_precomputed))
+
+    # server's items multiplied by server's key * generator of the EC
+    PRFed_server_set = set(server_prf_offline_parallel(server_set, key_gen_point))
+
     t1 = time()
 
     # The OPRF-processed database entries are simple hashed
@@ -35,11 +38,12 @@ if __name__ == "__main__":
             if SH.simple_hashed_data[i][j] == None:
                 SH.simple_hashed_data[i][j] = MSG_PADDING
 
+    t2 = time()
+
     # Here we perform the partitioning:
     # Namely, we partition each bin into alpha minibins with B/alpha items each
     # We represent each minibin as the coefficients of a polynomial of degree B/alpha that vanishes in all the entries of the mininbin
     # Therefore, each minibin will be represented by B/alpha + 1 coefficients; notice that the leading coeff = 1
-    t2 = time()
 
     poly_coeffs = []
     for i in range(NUM_OF_BINS):
@@ -57,4 +61,4 @@ if __name__ == "__main__":
     #print('OPRF preprocessing time {:.2f}s'.format(t1 - t0))
     #print('Hashing time {:.2f}s'.format(t2 - t1))
     #print('Poly coefficients from roots time {:.2f}s'.format(t3 - t2))
-    print('Server OFFLINE time {:.2f}s'.format(t3 - t0))            
+    print('Server OFFLINE time {:.2f}s'.format(t3 - t0))

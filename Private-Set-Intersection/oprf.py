@@ -34,7 +34,7 @@ def server_prf_offline_parallel(item_list, point):
     subrotuine server_prf_offline.
 
     :param item_list: a list of integers
-    :param point: a point on EC (it will be key * generator)
+    :param point: a point on the EC (server's key (mod generator order) * generator)
     :return: a sigma_max bits integer from the first coordinate of item * point
              (this will be the same as item * key * G)
     '''
