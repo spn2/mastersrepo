@@ -27,16 +27,10 @@ if __name__ == "__main__":
     t1 = time()
 
     # The OPRF-processed database entries are simple hashed
-    SH = Simple_hash(HASH_SEEDS)
-    for item in PRFed_server_set:
-        for i in range(NUM_OF_HASHES):
-            SH.insert(item, i)
-
     # simple_hashed_data is padded with MSG_PADDING
-    for i in range(NUM_OF_BINS):
-        for j in range(BIN_CAP):
-            if SH.hashed_data[i][j] == None:
-                SH.hashed_data[i][j] = MSG_PADDING
+    SH = Simple_hash(HASH_SEEDS)
+    SH.insert_entries(PRFed_server_set)
+    SH.pad_entries()
 
     t2 = time()
 

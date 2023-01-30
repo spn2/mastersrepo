@@ -59,7 +59,7 @@ class Simple_hash():
             print('Simple hashing aborted')
 
     # "simple_hashed_data is padded with MSG_PADDING"
-    def padding(self):
+    def pad_entries(self):
         for i in range(self.no_bins):
             for j in range(self.bin_capacity):
                 if self.hashed_data[i][j] == None:
