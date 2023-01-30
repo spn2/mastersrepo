@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
         t1 = time()
 
-        console.log("[green]Client OPRF preprocessing finished, time: {:.2f}s.[/green]".format(t1-t0))
+        console.log("[green]Client OPRF preprocessing finished. Time taken: {:.2f}s.[/green]".format(t1-t0))
 
 
         # write the preprocessed client's set to disk
