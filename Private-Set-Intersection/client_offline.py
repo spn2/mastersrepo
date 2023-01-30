@@ -2,6 +2,7 @@ import pickle
 from time import time
 
 from auxiliary_functions import *
+from oprf import client_prf_offline
 from oprf_constants import GENERATOR_ORDER, G, OPRF_CLIENT_KEY
 
 
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     client_set = read_file_return_list("client_set")
 
     # Client's items are encoded on the elliptic curve, retrieve the x and y coords of each point (item)
-    encoded_client_set = [(point.x, point.y) for point in multiply_items_by_point((client_set, client_point_precomputed))]
+    encoded_client_set = client_prf_offline((client_set, client_point_precomputed))
 
     # write the preprocessed client's set to disk
     g = open('client_preprocessed', 'wb')

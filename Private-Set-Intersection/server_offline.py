@@ -52,6 +52,9 @@ if __name__ == "__main__":
     pickle.dump(poly_coeffs, f)
     f.close()
     t3 = time()
+
+    print("=========== SERVER OFFLINE TIMES ===========")
+
     print('OPRF preprocessing time {:.2f}s'.format(t1 - t0))
     print('Hashing time {:.2f}s'.format(t2 - t1))
     print('Poly coefficients from roots time {:.2f}s'.format(t3 - t2))

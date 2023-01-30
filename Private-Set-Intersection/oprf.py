@@ -76,6 +76,15 @@ def server_prf_online_parallel(prf_list, key):
 
     return parallelize_function_on_lists(server_prf_online, inputs_with_key)
 
+def client_prf_offline(set_with_point):
+    """
+    :param set_with_points: client's unprocessed set (first index) and client's precomputed point
+                            (second index) corresponding to client's OPRF key times the EC generator
+    :return: PRF-encoded list of client's items
+    """
+    c_set = set_with_point[0]
+    p = set_with_point[1]
+    return [(point.x, point.y) for point in multiply_items_by_point((c_set, p))]
 
 def client_prf_online(key_coord_list):
     """
