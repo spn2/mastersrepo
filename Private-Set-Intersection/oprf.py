@@ -42,8 +42,9 @@ def server_prf_offline_parallel(item_list, point):
     # split up list, add point along with each of the new lists as a way to pass the point to each process
     process_items = split_list_into_parts(item_list, NUM_OF_PROCESSES)
     inputs_and_point = [(input_vec, point) for input_vec in process_items]
-    
-    return parallelize_function_on_lists(server_prf_online, inputs_and_point)
+
+    return parallelize_function_on_lists(server_prf_offline, inputs_and_point)
+
 
 
 def server_prf_online(points_with_key):
