@@ -125,34 +125,3 @@ def unpack_list_of_lists(lists):
     for l in lists:
         unpacked += l
     return unpacked
-
-def multiply_items_by_point(items_with_point):
-    """
-    :param items_with_point: list with items (first index) and point (on an elliptic curve)
-                             (second index)
-    :return: list of items multiplied by point
-    """
-
-    item_list = items_with_point[0]
-    p = items_with_point[1]
-
-    print(type(item_list))
-    print(type(p))
-
-    return [item * p for item in item_list]
-
-def parallelize_function_on_lists(func, lists):
-    """"
-    Uses the multiprocessing library's Pool object to run
-    func on each list in lists. 
-
-    :param func: function that takes a list as input and returns a list as output.
-    :param lists: list of lists.
-    :return: the aggregated lists from func as a single list. 
-    """
-
-    outputs = []
-    with Pool(NUM_OF_PROCESSES) as p:
-        outputs = p.map(func, lists)	
-    # outputs consists of a list of lists
-    return unpack_list_of_lists(outputs)

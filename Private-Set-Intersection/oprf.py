@@ -2,7 +2,7 @@ from multiprocessing import Pool
 
 from fastecdsa.point import Point
 
-from auxiliary_functions import split_list_into_parts, multiply_items_by_point, parallelize_function_on_lists
+from auxiliary_functions import split_list_into_parts, unpack_list_of_lists
 from oprf_constants import *
 
 def server_prf_offline(list_of_items_and_point):
@@ -107,4 +107,32 @@ def client_prf_online_parallel(prf_list, inv_key):
     keyed_inputs = [(inv_key, _) for _ in inputs]
 
     return parallelize_function_on_lists(client_prf_online, keyed_inputs)
+
+def multiply_items_by_point(items_with_point):
+    """
+    :param items_with_point: list with items (first index) and point (on an elliptic curve)
+                             (second index)
+    :return: list of items multiplied by point
+    """
+
+    item_list = items_with_point[0]
+    p = items_with_point[1]
+
+    return [item * p for item in item_list]
+
+def parallelize_function_on_lists(func, lists):
+    """"
+    Uses the multiprocessing library's Pool object to run
+    func on each list in lists. 
+
+    :param func: function that takes a list as input and returns a list as output.
+    :param lists: list of lists.
+    :return: the aggregated lists from func as a single list. 
+    """
+
+    outputs = []
+    with Pool(NUM_OF_PROCESSES) as p:
+        outputs = p.map(func, lists)	
+    # outputs consists of a list of lists
+    return unpack_list_of_lists(outputs)
 
