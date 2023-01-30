@@ -35,8 +35,8 @@ if __name__ == "__main__":
     # simple_hashed_data is padded with MSG_PADDING
     for i in range(NUM_OF_BINS):
         for j in range(BIN_CAP):
-            if SH.simple_hashed_data[i][j] == None:
-                SH.simple_hashed_data[i][j] = MSG_PADDING
+            if SH.hashed_data[i][j] == None:
+                SH.hashed_data[i][j] = MSG_PADDING
 
     t2 = time()
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         # we create a list of coefficients of all minibins from concatenating the list of coefficients of each minibin
         coeffs_from_bin = []
         for j in range(ALPHA):
-            roots = [SH.simple_hashed_data[i][MINIBIN_CAP * j + r] for r in range(MINIBIN_CAP)]
+            roots = [SH.hashed_data[i][MINIBIN_CAP * j + r] for r in range(MINIBIN_CAP)]
             coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, PLAIN_MOD).tolist()
         poly_coeffs.append(coeffs_from_bin)
 

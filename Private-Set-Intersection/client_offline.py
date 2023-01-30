@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     # write the preprocessed client's set to disk
     g = open('client_preprocessed', 'wb')
-    pickle.dump(encoded_client_set, g)	 
+    pickle.dump(encoded_client_set, g)
     g.close()
 
     t1 = time()

@@ -95,7 +95,7 @@ def client_prf_online(key_coord_list):
     return [(Q.x >> LOG_P - SIGMA_MAX - 10) & MASK for Q in points_time_inversekey]
 
 
-def client_prf_online_parallel(inv_key, prf_list):
+def client_prf_online_parallel(prf_list, inv_key):
     """
     :param inv_key: inverse of secret key
     :param prf_list: the PRF-encoded client set
