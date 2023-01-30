@@ -26,7 +26,9 @@ if __name__ == "__main__":
         # Client's items are encoded on the elliptic curve, retrieve the x and y coords of each point (item)
         encoded_client_set = client_prf_offline((client_set, client_point_precomputed))
 
-        console.log("[green]Client finished embedding items on ellipctic curve.[/green]")
+        t1 = time()
+
+        console.log("[green]Client OPRF preprocessing finished, time: {:.2f}s.[/green]".format(t1-t0))
 
 
         # write the preprocessed client's set to disk
@@ -34,8 +36,6 @@ if __name__ == "__main__":
         pickle.dump(encoded_client_set, g)
         g.close()
 
-        t1 = time()
+        t2 = time()
 
-        console.log("[blue]Client offline total time: {:.2f}s[/blue]".format(t1-t0))
-
-        # print('Client OFFLINE time: {:.2f}s'.format(t1-t0))
+        console.log("[blue]Client offline total time: {:.2f}s[/blue]".format(t2-t0))
