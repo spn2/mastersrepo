@@ -26,8 +26,6 @@ SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUM_OF_HASHES)) + 1)
 
 # B = [68, 176, 536, 1832, 6727] for log(server_size) = [16, 18, 20, 22, 24]
 BIN_CAP = 536
-
-
 # partitioning parameter
 ALPHA = 16
 # number of items in a minibin

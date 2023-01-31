@@ -4,7 +4,7 @@ from time import time
 
 from rich.console import Console
 
-from auxiliary_functions import coeffs_from_roots, read_file_return_list
+from auxiliary_functions import read_file_return_list
 from constants import *
 from oprf import server_prf_offline_parallel
 from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         t1 = time()
 
-        console.log("[green]OPRF preprocessing finished. Time taken: {:.2f}s.[/green]".format(t1-t0))
+        console.log("[green]OPRF preprocessing finished (server items are embedded on the ellipctic curve). Time taken: {:.2f}s.[/green]".format(t1-t0))
 
         # Server's OPRFed items are hashed and padded (see simple_hash.py)
         SH = Simple_hash(HASH_SEEDS)
@@ -42,18 +42,15 @@ if __name__ == "__main__":
 
         t2 = time()
 
-        console.log("[green]Simple hashing finished. Time taken: {:.2f}s.[/green]".format(t2-t1))
+        console.log("[green]Simple hashing finished (server items are in bins). Time taken: {:.2f}s.[/green]".format(t2-t1))
 
         # Here we perform the partitioning:
         # Namely, we partition each bin into alpha minibins with B/alpha items each
         # We represent each minibin as the coefficients of a polynomial of degree B/alpha that vanishes in all the entries of the mininbin
         # Therefore, each minibin will be represented by B/alpha + 1 coefficients; notice that the leading coeff = 1
-        poly_coeffs = SH.partition()
 
-        print(type(poly_coeffs))
-        print(type(poly_coeffs[0]))
-        print(poly_coeffs[0])
-        print(type(poly_coeffs[0][0]))
+
+        poly_coeffs = SH.partition(ALPHA, MINIBIN_CAP, PLAIN_MOD)
 
         f = open('server_preprocessed', 'wb')
         pickle.dump(poly_coeffs, f)
@@ -61,6 +58,6 @@ if __name__ == "__main__":
         
         t3 = time()
 
-        console.log("[green]Poly coefficients from roots finished. Time taken: {:.2f}s.[/green]".format(t3-t2))
+        console.log("[green]Finished partitioning (coefficients of minibin polynomials found). Time taken: {:.2f}s.[/green]".format(t3-t2))
 
         console.log("[blue]Server offline total time: {:.2f}s[/blue]".format(t3-t0))

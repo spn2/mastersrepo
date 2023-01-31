@@ -9,7 +9,8 @@ def int2base(n, b):
     '''
     :param n: an integer
     :param b: a base
-    :return: an array of coefficients from the base decomposition of an integer n with coeff[i] being the coeff of b ** i
+    :return: an array of coefficients from the base decomposition of an
+             integer n with coeff[i] being the coeff of b ** i
     '''
     if n < b:
         return [n]
@@ -42,7 +43,8 @@ def low_depth_multiplication(vector):
 
 def power_reconstruct(window, exponent):
     '''
-    :param: window: a matrix of integers as powers of y; in the protocol is the matrix with entries window[i][j] = [y ** i * base ** j]
+    :param: window: a matrix of integers as powers of y; in the protocol is the matrix
+                    with entries window[i][j] = [y ** i * base ** j]
     :param: exponent: an integer, will be an exponent <= logB_ell
     :return: y ** exponent
     '''
@@ -56,32 +58,35 @@ def power_reconstruct(window, exponent):
     return low_depth_multiplication(necessary_powers)
 
 
-def windowing(y, bound, modulus):
+def windowing(y, bound, mod):
     '''
     :param: y: an integer
     :param bound: an integer
-    :param modulus: a modulus integer
-    :return: a matrix associated to y, where we put y ** (i+1)*base ** j mod modulus in the (i,j) entry, as long as the exponent of y is smaller than some bound
+    :param mod: a modulus integer
+    :return: a matrix associated to y, where we put y ** (i+1)*base ** j modulus mod
+             in the (i,j) entry, as long as the exponent of y is smaller than some bound
     '''
     windowed_y = [[None for j in range(LOG_B_ELL)] for i in range(BASE-1)]
     for j in range(LOG_B_ELL):
         for i in range(BASE-1):
             if ((i+1) * BASE ** j - 1 < bound):
-                windowed_y[i][j] = pow(y, (i+1) * BASE ** j, modulus)
+                windowed_y[i][j] = pow(y, (i+1) * BASE ** j, mod)
     return windowed_y
 
 
-def coeffs_from_roots(roots, modulus):
+def compute_coefficients_from_roots(roots, mod):
     '''
+    Takes a set of roots and computes the coefficients of the polynomial that
+    vanishes at a root in roots.
+
     :param roots: an array of integers
-    :param modulus: an integer
+    :param mod: an integer
     :return: coefficients of a polynomial whose roots are roots modulo modulus
     '''
-    coefficients = np.array(1, dtype=np.int64)
+    # coefficients = np.array(1, dtype=np.int64)
     for r in roots:
-        coefficients = np.convolve(coefficients, [1, -r]) % modulus
-    return coefficients
-
+        coefficients = np.convolve(np.array(1, dtype=np.int64), [1, -r]) % mod
+    return coefficients.tolist()
 
 # 
 

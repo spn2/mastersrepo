@@ -2,7 +2,7 @@ import math
 import mmh3
 from random import randint
 
-from auxiliary_functions import coeffs_from_roots
+from auxiliary_functions import compute_coefficients_from_roots
 from constants import ALPHA, BIN_CAP, MINIBIN_CAP, NUM_OF_BINS, NUM_OF_HASHES, OUTPUT_BITS, PLAIN_MOD, SIGMA_MAX
 
 log_no_hashes = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
@@ -41,9 +41,6 @@ class Simple_hash():
         self.hash_seed = hash_seed
         self.bin_capacity = BIN_CAP
         self.msg_padding = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(math.log2(NUM_OF_HASHES)) + 1) + 1 # data padding
-        self.num_minibins = ALPHA
-        self.minibin_cap = MINIBIN_CAP
-        self.plain_mod = PLAIN_MOD
 
     # inserts a set of items, using self.insert
     # for our purpose the set of items should be the PRFed server's set
@@ -69,13 +66,24 @@ class Simple_hash():
                 if self.hashed_data[i][j] == None:
                     self.hashed_data[i][j] = self.msg_padding
 
-    # bins are partitioned into alpha minibins (i.e. each new minibin has B/alpha items)
-    def partition(self):
-        poly_coeffs = []
+    def partition(self, num_minibins, minibin_cap, plain_mod):
+        """
+        Performs partitioning on the bins (self.hashed_data). Bins are partitioned into
+        num_minibins minibins, with minibin_cap items in each minibin. Minibins are represented
+        as coefficients from polynomials with degree num_minibins/num_bins . This polynomial equals to zero
+        whenever it is evaluated at any of the items in the minibin.
+
+        :param num_minibins: the number of minibins
+        :param minibin_cap: the number of items in each minibin
+        :param plain_mod: plain modulus (coefficient are modulo plain_mod)
+        :return: list of integers representing coefficients from the minibin polynomials
+        """
+
+        coefficients = []
         for i in range(self.num_bins):
             coeffs_from_bin = []
-            for j in range(self.num_minibins):
-                roots = [self.hashed_data[i][self.minibin_cap * j + r] for r in range(self.minibin_cap)]
-                coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, self.plain_mod).tolist()
-            poly_coeffs.append(coeffs_from_bin)
-        return poly_coeffs
+            for j in range(num_minibins):
+                roots = [self.hashed_data[i][minibin_cap * j + k] for k in range(minibin_cap)]
+                coeffs_from_bin = coeffs_from_bin + compute_coefficients_from_roots(roots, plain_mod)
+            coefficients.append(coeffs_from_bin)
+        return coefficients
