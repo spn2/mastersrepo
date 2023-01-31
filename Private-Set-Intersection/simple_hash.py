@@ -81,9 +81,9 @@ class Simple_hash():
 
         coefficients = []
         for i in range(self.num_bins):
-            coeffs_from_bin = []
+            bin_coefficients = []
             for j in range(num_minibins):
                 roots = [self.hashed_data[i][minibin_cap * j + k] for k in range(minibin_cap)]
-                coeffs_from_bin = coeffs_from_bin + compute_coefficients_from_roots(roots, plain_mod)
-            coefficients.append(coeffs_from_bin)
+                bin_coefficients = bin_coefficients + compute_coefficients_from_roots(roots, plain_mod)
+            coefficients.append(bin_coefficients)
         return coefficients

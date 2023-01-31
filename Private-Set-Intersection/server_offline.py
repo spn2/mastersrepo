@@ -44,12 +44,6 @@ if __name__ == "__main__":
 
         console.log("[green]Simple hashing finished (server items are in bins). Time taken: {:.2f}s.[/green]".format(t2-t1))
 
-        # Here we perform the partitioning:
-        # Namely, we partition each bin into alpha minibins with B/alpha items each
-        # We represent each minibin as the coefficients of a polynomial of degree B/alpha that vanishes in all the entries of the mininbin
-        # Therefore, each minibin will be represented by B/alpha + 1 coefficients; notice that the leading coeff = 1
-
-
         poly_coeffs = SH.partition(ALPHA, MINIBIN_CAP, PLAIN_MOD)
 
         f = open('server_preprocessed', 'wb')
