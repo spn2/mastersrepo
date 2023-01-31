@@ -35,11 +35,10 @@ if __name__ == "__main__":
 
         console.log("[green]OPRF preprocessing finished. Time taken: {:.2f}s.[/green]".format(t1-t0))
 
-        # The OPRF-processed database entries are simple hashed
-        # simple_hashed_data is padded with MSG_PADDING
+        # Server's OPRFed items are hashed and padded (see simple_hash.py)
         SH = Simple_hash(HASH_SEEDS)
         SH.insert_entries(PRFed_server_set)
-        SH.pad_entries()
+        SH.pad_bins()
 
         t2 = time()
 
@@ -49,19 +48,17 @@ if __name__ == "__main__":
         # Namely, we partition each bin into alpha minibins with B/alpha items each
         # We represent each minibin as the coefficients of a polynomial of degree B/alpha that vanishes in all the entries of the mininbin
         # Therefore, each minibin will be represented by B/alpha + 1 coefficients; notice that the leading coeff = 1
+        poly_coeffs = SH.partition()
 
-        poly_coeffs = []
-        for i in range(NUM_OF_BINS):
-            # we create a list of coefficients of all minibins from concatenating the list of coefficients of each minibin
-            coeffs_from_bin = []
-            for j in range(ALPHA):
-                roots = [SH.hashed_data[i][MINIBIN_CAP * j + r] for r in range(MINIBIN_CAP)]
-                coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, PLAIN_MOD).tolist()
-            poly_coeffs.append(coeffs_from_bin)
+        print(type(poly_coeffs))
+        print(type(poly_coeffs[0]))
+        print(poly_coeffs[0])
+        print(type(poly_coeffs[0][0]))
 
         f = open('server_preprocessed', 'wb')
         pickle.dump(poly_coeffs, f)
         f.close()
+        
         t3 = time()
 
         console.log("[green]Poly coefficients from roots finished. Time taken: {:.2f}s.[/green]".format(t3-t2))

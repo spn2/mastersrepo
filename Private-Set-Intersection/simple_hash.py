@@ -2,7 +2,9 @@ import math
 import mmh3
 from random import randint
 
-from constants import BIN_CAP, NUM_OF_BINS, NUM_OF_HASHES, OUTPUT_BITS, SIGMA_MAX
+from auxiliary_functions import coeffs_from_roots
+from constants import ALPHA, BIN_CAP, MINIBIN_CAP, NUM_OF_BINS, NUM_OF_HASHES, OUTPUT_BITS, PLAIN_MOD, SIGMA_MAX
+
 log_no_hashes = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
 POW_2_MASK = 2 ** OUTPUT_BITS - 1
 
@@ -32,17 +34,19 @@ def location(seed, item):
 class Simple_hash():
 
     def __init__(self, hash_seed):
-        self.no_bins = NUM_OF_BINS
-        self.hashed_data = [[None for j in range(BIN_CAP)] for i in range(self.no_bins)] # no_bins bins, len = BIN_CAP
-        self.occurences = [0 for i in range(self.no_bins)]
+        self.num_bins = NUM_OF_BINS
+        self.hashed_data = [[None for j in range(BIN_CAP)] for i in range(self.num_bins)] # no_bins bins, len = BIN_CAP
+        self.occurences = [0 for i in range(self.num_bins)]
         self.FAIL = 0
         self.hash_seed = hash_seed
         self.bin_capacity = BIN_CAP
         self.msg_padding = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(math.log2(NUM_OF_HASHES)) + 1) + 1 # data padding
+        self.num_minibins = ALPHA
+        self.minibin_cap = MINIBIN_CAP
+        self.plain_mod = PLAIN_MOD
 
     # inserts a set of items, using self.insert
     # for our purpose the set of items should be the PRFed server's set
-    # "The OPRF-processed database entries are simple hashed"
     def insert_entries(self, items):
         for item in items:
             for i in range(len(self.hash_seed)): # NUM_OF_HASHES
@@ -58,10 +62,20 @@ class Simple_hash():
             self.FAIL = 1
             print('Simple hashing aborted')
 
-    # "simple_hashed_data is padded with MSG_PADDING"
-    def pad_entries(self):
-        for i in range(self.no_bins):
+    # bins are padded to have a consistent size
+    def pad_bins(self):
+        for i in range(self.num_bins):
             for j in range(self.bin_capacity):
                 if self.hashed_data[i][j] == None:
                     self.hashed_data[i][j] = self.msg_padding
 
+    # bins are partitioned into alpha minibins (i.e. each new minibin has B/alpha items)
+    def partition(self):
+        poly_coeffs = []
+        for i in range(self.num_bins):
+            coeffs_from_bin = []
+            for j in range(self.num_minibins):
+                roots = [self.hashed_data[i][self.minibin_cap * j + r] for r in range(self.minibin_cap)]
+                coeffs_from_bin = coeffs_from_bin + coeffs_from_roots(roots, self.plain_mod).tolist()
+            poly_coeffs.append(coeffs_from_bin)
+        return poly_coeffs

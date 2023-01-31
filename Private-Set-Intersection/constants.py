@@ -30,6 +30,8 @@ BIN_CAP = 536
 
 # partitioning parameter
 ALPHA = 16
+# number of items in a minibin
+MINIBIN_CAP = int(BIN_CAP/ALPHA)
 
 # windowing parameter
 ELL = 2
@@ -38,6 +40,5 @@ ELL = 2
 ##############################################################################################################
 LOG_NO_HASHES = int(log2(NUM_OF_HASHES)) + 1
 BASE = 2 ** ELL
-MINIBIN_CAP = int(BIN_CAP/ALPHA)
 LOG_B_ELL = int(log2(MINIBIN_CAP/ELL)) + 1 # <= 2 ** HE.depth
 

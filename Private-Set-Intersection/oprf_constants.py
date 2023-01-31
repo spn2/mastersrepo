@@ -8,7 +8,7 @@ from constants import SIGMA_MAX
 MASK = 2 ** SIGMA_MAX - 1
 
 # for parallel computation
-NUM_OF_PROCESSES = 4
+NUM_OF_PROCESSES = 8
 
 # Curve parameters
 CURVE = P192
