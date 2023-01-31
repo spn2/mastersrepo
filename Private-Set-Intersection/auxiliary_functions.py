@@ -76,17 +76,14 @@ def windowing(y, bound, mod):
 
 def compute_coefficients_from_roots(roots, mod):
     '''
-    Takes a set of roots and computes the coefficients of the polynomial that
-    vanishes at a root in roots.
+    Takes a set of roots and computes the coefficients (modulo mod) of the
+    polynomial that vanishes at each root in roots.
 
     :param roots: an array of integers
     :param mod: an integer
-    :return: coefficients of a polynomial whose roots are roots modulo modulus
+    :return: integer coefficients of a polynomial whose roots are roots modulo mod
     '''
-    # coefficients = np.array(1, dtype=np.int64)
-    for r in roots:
-        coefficients = np.convolve(np.array(1, dtype=np.int64), [1, -r]) % mod
-    return coefficients.tolist()
+    return [np.convolve(np.array(1, dtype=np.int64), [1, -r]) % mod for r in roots]
 
 # 
 
