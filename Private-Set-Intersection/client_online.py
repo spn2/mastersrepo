@@ -46,9 +46,9 @@ def send_embedded_client_items_to_server(clientsocket, preprocessed_file):
     encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
 
 
-    L = len(encoded_client_set_serialized)
-    sL = str(L) + ' ' * (10 - len(str(L)))
-    client_to_server_communiation_oprf = L #in bytes
+    msg_length = len(encoded_client_set_serialized)
+    sL = str(msg_length) + ' ' * (10 - len(str(msg_length)))
+    client_to_server_communiation_oprf = msg_length #in bytes
     # The length of the message is sent first
     clientsocket.sendall((sL).encode())
     clientsocket.sendall(encoded_client_set_serialized)
@@ -61,27 +61,7 @@ client.connect(('localhost', 4470))
 HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
 
 
-
 client_to_server_communiation_oprf = send_embedded_client_items_to_server(client, "client_preprocessed")
-
-
-# # We prepare the partially OPRF processed database to be sent to the server
-# pickle_off = open("client_preprocessed", "rb")
-# encoded_client_set = pickle.load(pickle_off)
-# encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
-
-# L = len(encoded_client_set_serialized)
-# sL = str(L) + ' ' * (10 - len(str(L)))
-# client_to_server_communiation_oprf = L #in bytes
-# # The length of the message is sent first
-# client.sendall((sL).encode())
-# client.sendall(encoded_client_set_serialized)
-
-
-
-
-
-
 
 
 
@@ -108,13 +88,16 @@ print(' * OPRF protocol done!')
 
 # Each PRFed item from the client set is mapped to a Cuckoo hash table
 CH = Cuckoo(HASH_SEEDS)
-for item in PRFed_client_set:
-    CH.insert(item)
+# for item in PRFed_client_set:
+#     CH.insert(item)
 
-# We padd the Cuckoo vector with dummy messages
-for i in range(CH.number_of_bins):
-    if (CH.data_structure[i] == None):
-        CH.data_structure[i] = dummy_msg_client
+# # We padd the Cuckoo vector with dummy messages
+# for i in range(CH.number_of_bins):
+#     if (CH.data_structure[i] == None):
+#         CH.data_structure[i] = dummy_msg_client
+
+CH.insert_items(PRFed_client_set)
+CH.pad(dummy_msg_client)
 
 # We apply the windowing procedure for each item from the Cuckoo structure
 windowed_items = []

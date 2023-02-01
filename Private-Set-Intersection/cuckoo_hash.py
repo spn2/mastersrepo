@@ -69,7 +69,11 @@ class Cuckoo():
 		self.depth = 0
 		self.FAIL = 0
 
-		self.hash_seed = hash_seed	
+		self.hash_seed = hash_seed
+
+	def insert_items(self, items):
+		for item in items:
+			self.insert(item)
 
 	def insert(self, item): #item is an integer
 		current_location = location( self.hash_seed[self.insert_index], item)
@@ -87,4 +91,10 @@ class Cuckoo():
 				jumping_item = reconstruct_item(current_item, current_location, self.hash_seed[unwanted_index])
 				self.insert(jumping_item)		
 			else:
-				self.FAIL = 1	
+				self.FAIL = 1
+	
+	def pad(self, dummy_msg):
+		# pad with dummy_msg
+		for i in range(self.number_of_bins):
+			if (self.data_structure[i] == None):
+				self.data_structure[i] = dummy_msg
