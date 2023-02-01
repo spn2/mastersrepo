@@ -13,8 +13,7 @@ from simple_hash import Simple_hash
 # simple_hashed_data is padded with MSG_PADDING
 MSG_PADDING = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(log2(NUM_OF_HASHES)) + 1) + 1
 
-if __name__ == "__main__":
-
+def main():
     # for prettier printing
     console = Console()
 
@@ -55,3 +54,6 @@ if __name__ == "__main__":
         console.log("[green]Finished partitioning (coefficients of minibin polynomials found). Time taken: {:.2f}s.[/green]".format(t3-t2))
 
         console.log("[blue]Server offline total time: {:.2f}s[/blue]".format(t3-t0))
+
+if __name__ == "__main__":
+    main()

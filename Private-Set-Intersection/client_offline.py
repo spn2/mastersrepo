@@ -7,9 +7,7 @@ from auxiliary_functions import *
 from oprf import client_prf_offline
 from oprf_constants import GENERATOR_ORDER, G, OPRF_CLIENT_KEY
 
-
-if __name__ == "__main__":
-
+def main():
     # for prettier printing
     console = Console()
 
@@ -39,3 +37,8 @@ if __name__ == "__main__":
         t2 = time()
 
         console.log("[blue]Client offline total time: {:.2f}s[/blue]".format(t2-t0))
+
+
+
+if __name__ == "__main__":
+    main()
