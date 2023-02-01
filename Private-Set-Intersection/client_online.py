@@ -33,6 +33,28 @@ def client_FHE_setup(polynomial_modulus, coefficient_modulus):
 
     return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
 
+def send_embedded_client_items_to_server(clientsocket, preprocessed_file):
+    """
+    Opens the client's preprocessed set, serializes it and sends it to the server.
+
+    :param clientsocket: client's socket object
+    :preprocessed_file: filename of client's preprocessed dataset (output of client_offline.py)
+    """
+    # We prepare the partially OPRF processed database to be sent to the server
+    pickle_off = open(preprocessed_file, "rb")
+    encoded_client_set = pickle.load(pickle_off)
+    encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
+
+
+    L = len(encoded_client_set_serialized)
+    sL = str(L) + ' ' * (10 - len(str(L)))
+    client_to_server_communiation_oprf = L #in bytes
+    # The length of the message is sent first
+    clientsocket.sendall((sL).encode())
+    clientsocket.sendall(encoded_client_set_serialized)
+
+    return client_to_server_communiation_oprf
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('localhost', 4470))
 
@@ -40,23 +62,35 @@ HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POL
 
 
 
+client_to_server_communiation_oprf = send_embedded_client_items_to_server(client, "client_preprocessed")
+
+
+# # We prepare the partially OPRF processed database to be sent to the server
+# pickle_off = open("client_preprocessed", "rb")
+# encoded_client_set = pickle.load(pickle_off)
+# encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
+
+# L = len(encoded_client_set_serialized)
+# sL = str(L) + ' ' * (10 - len(str(L)))
+# client_to_server_communiation_oprf = L #in bytes
+# # The length of the message is sent first
+# client.sendall((sL).encode())
+# client.sendall(encoded_client_set_serialized)
 
 
 
-# We prepare the partially OPRF processed database to be sent to the server
-pickle_off = open("client_preprocessed", "rb")
-encoded_client_set = pickle.load(pickle_off)
-encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
 
-L = len(encoded_client_set_serialized)
-sL = str(L) + ' ' * (10 - len(str(L)))
-client_to_server_communiation_oprf = L #in bytes
-# The length of the message is sent first
-client.sendall((sL).encode())
-client.sendall(encoded_client_set_serialized)
+
+
+
+
+
+
 
 L = client.recv(10).decode().strip()
 L = int(L, 10)
+
+
 
 PRFed_encoded_client_set_serialized = b""
 while len(PRFed_encoded_client_set_serialized) < L:
