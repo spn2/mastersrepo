@@ -43,30 +43,8 @@ def main():
     # We apply the windowing procedure for each item from the Cuckoo structure
     windowed_items =  CH.windowing(MINIBIN_CAP, PLAIN_MOD)
 
-    plain_query = [None for k in range(len(windowed_items))]
-    enc_query = [[None for j in range(LOG_B_ELL)] for i in range(1, BASE)]
 
-    # We create the <<batched>> query to be sent to the server
-    # By our choice of parameters, number of bins = poly modulus degree (m/N =1), so we get (base - 1) * logB_ell ciphertexts
-    for j in range(LOG_B_ELL):
-        for i in range(BASE - 1):
-            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
-                for k in range(len(windowed_items)):
-                    plain_query[k] = windowed_items[k][i][j]
-                enc_query[i][j] = HEctx.encrypt(plain_query)
-
-    enc_query_serialized = [[None for j in range(LOG_B_ELL)] for i in range(1, BASE)]
-    for j in range(LOG_B_ELL):
-        for i in range(BASE - 1):
-            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
-                enc_query_serialized[i][j] = enc_query[i][j].to_bytes()
-
-
-
-
-
-    # context_serialized = public_context.serialize()
-    # message_to_be_sent = [context_serialized, enc_query_serialized]
+    enc_query_serialized = create_and_seralize_batched_query(HEctx, windowed_items, LOG_B_ELL, BASE, MINIBIN_CAP)
 
     message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
 
@@ -194,6 +172,35 @@ def receive_PRFed_set(clientsocket, bytes_to_receive):
     server_to_client_communication_oprf = len(PRFed_encoded_client_set_serialized)
 
     return PRFed_encoded_client_set, server_to_client_communication_oprf
+
+def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base, minibin_cap):
+    """
+    
+    :param pyfhelctx: the Pyfhel object
+    :param windowed_items: client's windowed items
+    :return: enc_query_serialized
+    """
+    plain_query = [None for k in range(len(windowed_items))]
+    enc_query = [[None for j in range(log_b_ell)] for i in range(1, base)]
+
+    # We create the <<batched>> query to be sent to the server
+    # By our choice of parameters, number of bins = poly modulus degree (m/N =1), so we get (base - 1) * logB_ell ciphertexts
+    for j in range(log_b_ell):
+        for i in range(base - 1):
+            if ((i + 1) * base ** j - 1 < minibin_cap):
+                for k in range(len(windowed_items)):
+                    plain_query[k] = windowed_items[k][i][j]
+                enc_query[i][j] = pyfhelctx.encrypt(plain_query)
+    
+    enc_query_serialized = [[None for j in range(log_b_ell)] for i in range(1, base)]
+    for j in range(log_b_ell):
+        for i in range(base - 1):
+            if ((i + 1) * base ** j - 1 < minibin_cap):
+                enc_query_serialized[i][j] = enc_query[i][j].to_bytes()
+
+    return enc_query_serialized
+
+    
 
 if __name__ == "__main__":
     main()
