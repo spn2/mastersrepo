@@ -83,7 +83,6 @@ def compute_coefficients_from_roots(roots, mod):
     :param mod: an integer
     :return: integer coefficients of a polynomial whose roots are roots modulo mod
     '''
-    # return [np.convolve(np.array(1, dtype=np.int64), [1, -r]) % mod for r in roots]
     coefficients = np.array(1, dtype=np.int64)
     for r in roots:
         coefficients = np.convolve(coefficients, [1, -r]) % mod

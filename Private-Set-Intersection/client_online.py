@@ -11,23 +11,32 @@ from oprf_constants import GENERATOR_ORDER, OPRF_CLIENT_KEY
 
 dummy_msg_client = 2 ** (SIGMA_MAX - OUTPUT_BITS + LOG_NO_HASHES)
 
+def client_FHE_setup(polynomial_modulus, coefficient_modulus):
+    """
+    Setting the public and private contexts for the BFV Homorphic Encryption scheme via Pyfhel.
+
+    :param polynomial_modulus: integer representing the polynomial modulus
+    :param coefficient_modulus: integer representing the polynomial coefficient modulus
+    :return: the Pyfhel object, context, public key, relinearization key, and rotation key in a 5-tuple
+             (the last 4 as bytes for sending to server).
+    """
+    HEctx = Pyfhel()
+    HEctx.contextGen(scheme="bfv", n=polynomial_modulus, t=coefficient_modulus)
+    HEctx.keyGen()
+    HEctx.relinKeyGen()
+    HEctx.rotateKeyGen()
+
+    s_context    = HEctx.to_bytes_context()
+    s_public_key = HEctx.to_bytes_public_key()
+    s_relin_key  = HEctx.to_bytes_relin_key()
+    s_rotate_key = HEctx.to_bytes_rotate_key()
+
+    return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('localhost', 4470))
 
-
-
-
-# Pyfhel: Setting the public and private contexts for the BFV Homorphic Encryption scheme
-HEctx = Pyfhel()
-HEctx.contextGen(scheme="bfv", n=POLY_MOD, t=PLAIN_MOD)
-HEctx.keyGen()
-HEctx.relinKeyGen()
-HEctx.rotateKeyGen()
-
-s_context    = HEctx.to_bytes_context()
-s_public_key = HEctx.to_bytes_public_key()
-s_relin_key  = HEctx.to_bytes_relin_key()
-s_rotate_key = HEctx.to_bytes_rotate_key()
+HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
 
 
 
