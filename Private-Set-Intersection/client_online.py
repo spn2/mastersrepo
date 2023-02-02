@@ -82,11 +82,11 @@ def main():
         console.log("[yellow]Client and server intersection found.[/yellow]")
 
         t3 = time()
-        console.log("\n[yellow]Intersection recovered correctly: {}[/yellow]".format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
-        console.log("[yellow]Client ONLINE computation time {:.2f}s[/yellow]".format(t1 - t0 + t3 - t2))
-        console.log("[yellow]Communication size:[/yellow]")
-        console.log("[yellow]~ Client --> Server:  {:.2f} MB[/yellow]".format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
-        console.log("[yellow]~ Server --> Client:  {:.2f} MB[/yellow]".format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
+        console.log("\n[blue]Intersection recovered correctly: {}[/blue]".format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
+        console.log("[blue]Client ONLINE computation time {:.2f}s[/blue]".format(t1 - t0 + t3 - t2))
+        console.log("[blue]Communication size:[/blue]")
+        console.log("[blue]~ Client --> Server:  {:.2f} MB[/blue]".format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
+        console.log("[blue]~ Server --> Client:  {:.2f} MB[/blue]".format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
 
         # disconnect from server
         client.close()

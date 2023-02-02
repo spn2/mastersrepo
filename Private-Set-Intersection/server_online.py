@@ -12,33 +12,43 @@ from oprf import server_prf_online_parallel
 from oprf_constants import OPRF_SERVER_KEY
 
 
-serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serv.bind(('localhost', 4470))
-serv.listen(1)
+def main():
+    # ready socket object and listen for incoming connection
+    serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serv.bind(('localhost', 4470))
+    serv.listen(1)
 
-g = open('server_preprocessed', 'rb')
-poly_coeffs = pickle.load(g)
 
-# For the online phase of the server, we need to use the columns of the preprocessed database
-transposed_poly_coeffs = np.transpose(poly_coeffs).tolist()
 
-for i in range(1):
+    g = open('server_preprocessed', 'rb')
+    poly_coeffs = pickle.load(g)
+
+    # For the online phase of the server, we need to use the columns of the preprocessed database
+    transposed_poly_coeffs = np.transpose(poly_coeffs).tolist()
+
+
+    # accept connection from client
     conn, addr = serv.accept()
-    L = conn.recv(10).decode().strip()
-    L = int(L, 10)
+    data_length_to_get_from_client = int(conn.recv(10).decode().strip())
+
     # OPRF layer: the server receives the encoded set elements as curve points
     encoded_client_set_serialized = b""
-    while len(encoded_client_set_serialized) < L:
+    while len(encoded_client_set_serialized) < data_length_to_get_from_client:
         data = conn.recv(4096)
         if not data: break
         encoded_client_set_serialized += data   
     encoded_client_set = pickle.loads(encoded_client_set_serialized)
+
+
+
     t0 = time()
     # The server computes (parallel computation) the online part of the OPRF protocol, using its own secret key
     PRFed_encoded_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
     PRFed_encoded_client_set_serialized = pickle.dumps(PRFed_encoded_client_set, protocol=None)
     L = len(PRFed_encoded_client_set_serialized)
     sL = str(L) + ' ' * (10 - len(str(L))) #pad len to 10 bytes
+
+
 
     conn.sendall((sL).encode())
     conn.sendall(PRFed_encoded_client_set_serialized)    
@@ -59,47 +69,23 @@ for i in range(1):
     # message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
     received_data = pickle.loads(final_data)
 
-    # HEctx = received_data[0]
-    # clientPubKey = received_data[1]
-    # clientRelKey = received_data[2]
-    # clientRotKey = received_data[3]
-    # received_enc_query_serialized = received_data[4]
-
-
-
 
     print(type(received_data))
-    
+
     HE_server = Pyfhel()
     HE_server.from_bytes_context(received_data[0])
     HE_server.from_bytes_public_key(received_data[1])
     HE_server.from_bytes_relin_key(received_data[2])
     HE_server.from_bytes_rotate_key(received_data[3])
-    # print("###################")
-    # print(len(received_data[4]))
-    # print(type(received_data[4]))
-    # print("@@@@@@@@@@@@@@@")
-    # print(len(received_data[4][0]))
-    # print(len(received_data[4][1]))
-    # print(len(received_data[4][2]))
-    # print("###################")
-    # cx = PyCtxt(pyfhel=HE_server, bytestring=received_data[4])
+
     received_enc_query_serialized = received_data[4]
-    
-    # OLD:
-    # srv_context = ts.context_from(received_data[0])
-
-
-
 
     received_enc_query = [[None for j in range(LOG_B_ELL)] for i in range(BASE - 1)]
     for i in range(BASE - 1):
         for j in range(LOG_B_ELL):
             if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
                 received_enc_query[i][j] = PyCtxt(pyfhel=HE_server, bytestring=received_enc_query_serialized[i][j])
-                # OLD:
-                # received_enc_query[i][j] = ts.bfv_vector_from(srv_context, received_enc_query_serialized[i][j])
-    
+
     # Here we recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity}), from the encrypted windowing of y.
     # These are needed to compute the polynomial of degree minibin_capacity
     all_powers = [None for i in range(MINIBIN_CAP)]
@@ -137,3 +123,7 @@ for i in range(1):
     print('Server ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
 
     conn.close()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,7 @@
 from math import log2
 from multiprocessing import Pool
 import numpy as np
+import pickle
 
 from constants import *
 from oprf_constants import NUM_OF_PROCESSES
@@ -129,3 +130,26 @@ def unpack_list_of_lists(lists):
     for l in lists:
         unpacked += l
     return unpacked
+
+
+# online functions
+def receive_and_deserialize_data(socketobj, expected_data_length):
+    """
+    Receives expected_data_length data from the other side of the socket 
+    connection. Deserializes the data before returning it.
+    
+    :param clientsocket: client's socket object
+    :returns:
+        PRFed_encoded_client_set: PRF-encoded client set
+        server_to_client_communication_oprf: size of data sent by server
+    """
+
+    # OPRF layer: the server receives the encoded set elements as curve points
+    serialized_data = b""
+
+    while len(serialized_data) < expected_data_length:
+        data = socketobj.recv(4096)
+        if not data: break
+        serialized_data += data
+
+    return pickle.loads(serialized_data)
