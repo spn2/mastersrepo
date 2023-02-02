@@ -50,7 +50,6 @@ def main():
     
     # set up and serialize the query to be sent to the server
     message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
-
     # send query to server
     client_to_server_communiation_query = send_query_to_server(client, message_to_be_sent)
 
@@ -114,8 +113,8 @@ def send_bytes_to_send_to_server(clientsocket, data):
     
     # prepare size, pad with spaces to reach 10 bytes, send data, return the length
     msg_length = len(data)
-    padded_length = str(msg_length) + ' ' * (10 - len(str(msg_length)))
-    clientsocket.sendall((padded_length).encode())
+    padded_msg_length = str(msg_length) + ' ' * (10 - len(str(msg_length)))
+    clientsocket.sendall((padded_msg_length).encode())
 
     return msg_length
 
@@ -153,7 +152,8 @@ def get_bytes_to_receive_from_server(clientsocket):
 
 def receive_PRFed_set(clientsocket):
     """
-    Receives the PRF-processed set from the server.
+    Receives the (serialized) PRF-processed set from the server. Unserializes the
+    set and returns it along with the length of the serialized data.
     
     :param clientsocket: client's socket object
     :returns:
@@ -163,15 +163,15 @@ def receive_PRFed_set(clientsocket):
 
     bytes_to_receive = get_bytes_to_receive_from_server(clientsocket)
 
-    PRFed_encoded_client_set_serialized = b""
-    while len(PRFed_encoded_client_set_serialized) < bytes_to_receive:
+    PRFed_client_set_serialized = b""
+    while len(PRFed_client_set_serialized) < bytes_to_receive:
         data = clientsocket.recv(4096)
         if not data: break
-        PRFed_encoded_client_set_serialized += data   
-    PRFed_encoded_client_set = pickle.loads(PRFed_encoded_client_set_serialized)
-    server_to_client_communication_oprf = len(PRFed_encoded_client_set_serialized)
+        PRFed_client_set_serialized += data
 
-    return PRFed_encoded_client_set, server_to_client_communication_oprf
+    PRFed_client_set = pickle.loads(PRFed_client_set_serialized)
+
+    return PRFed_client_set, len(PRFed_client_set_serialized)
 
 def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base, minibin_cap):
     """
@@ -187,18 +187,19 @@ def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base
 
     # We create the <<batched>> query to be sent to the server
     # By our choice of parameters, number of bins = poly modulus degree (m/N =1), so we get (base - 1) * logB_ell ciphertexts
-    for j in range(log_b_ell):
-        for i in range(base - 1):
-            if ((i + 1) * base ** j - 1 < minibin_cap):
+    for i in range(log_b_ell):
+        for j in range(base - 1):
+            if ((j + 1) * base ** i - 1 < minibin_cap):
                 for k in range(len(windowed_items)):
-                    plain_query[k] = windowed_items[k][i][j]
-                enc_query[i][j] = pyfhelctx.encrypt(plain_query)
+                    plain_query[k] = windowed_items[k][j][i]
+                enc_query[j][i] = pyfhelctx.encrypt(plain_query)
     
     enc_query_serialized = [[None for j in range(log_b_ell)] for i in range(1, base)]
-    for j in range(log_b_ell):
-        for i in range(base - 1):
-            if ((i + 1) * base ** j - 1 < minibin_cap):
-                enc_query_serialized[i][j] = enc_query[i][j].to_bytes()
+
+    for i in range(log_b_ell):
+        for j in range(base - 1):
+            if ((j + 1) * base ** i - 1 < minibin_cap):
+                enc_query_serialized[j][i] = enc_query[j][i].to_bytes()
 
     return enc_query_serialized
 
@@ -215,13 +216,10 @@ def send_query_to_server(clientsocket, message_to_be_sent):
 
     message_to_be_sent_serialized = pickle.dumps(message_to_be_sent, protocol=None)
 
-    length_of_query = len(message_to_be_sent_serialized)
-    sL = str(length_of_query) + ' ' * (10 - len(str(length_of_query)))
-    client_to_server_communiation_query = length_of_query 
-    #the lenght of the message is sent first
-    clientsocket.sendall((sL).encode())
-    print(" * Sending the context and ciphertext to the server....")
-    # Now we send the message to the server
+    # send length of data first
+    client_to_server_communiation_query = send_bytes_to_send_to_server(clientsocket, message_to_be_sent_serialized)
+    # print("context + ciphertext -> server")
+    # then send the actual data
     clientsocket.sendall(message_to_be_sent_serialized)
 
     return client_to_server_communiation_query
@@ -235,6 +233,7 @@ def receive_answer_from_server(clientsocket):
         ciphertexts - the unserialized ciphertexts (answers)
         server_to_client_query_response - size of the response (size of serialized ciphertexts)
     """
+
     bytes_to_receive = get_bytes_to_receive_from_server(clientsocket)
 
     answer = b""
@@ -242,11 +241,10 @@ def receive_answer_from_server(clientsocket):
         data = clientsocket.recv(4096)
         if not data: break
         answer += data
-    server_to_client_query_response = len(answer) #bytes
-    # Here is the vector of decryptions of the answer
+
     ciphertexts = pickle.loads(answer)
 
-    return ciphertexts, server_to_client_query_response
+    return ciphertexts, len(answer)
 
 def decrypt_ciphertexts(pyfhelctx, ciphertexts, scheme="bfv"):
     """
@@ -280,15 +278,17 @@ def find_client_intersection(decryptions, windowed_items, PRFed_client_set,):
 
     count = [0] * ALPHA
 
+    # get client's set
     g = open('client_set', 'r')
     client_set_entries = g.readlines()
     g.close()
+
     client_intersection = []
+
     for j in range(ALPHA):
         for i in range(POLY_MOD):
             if decryptions[j][i] == 0:
                 count[j] = count[j] + 1
-
                 # The index i is the location of the element in the intersection
                 # Here we recover this element from the Cuckoo hash structure
                 PRFed_common_element = reconstruct_item(recover_CH_structure[i], i, HASH_SEEDS[recover_CH_structure[i] % (2 ** LOG_NO_HASHES)])
