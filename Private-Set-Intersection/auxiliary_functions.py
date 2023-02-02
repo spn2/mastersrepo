@@ -133,6 +133,33 @@ def unpack_list_of_lists(lists):
 
 
 # online functions
+def serialize_and_send_data(socketobj, data=None, filename=""):
+    """
+    Sends data to the other part of the socketobj.
+
+    :param clientsocket: socket object with a connection to the other party
+    :param data: data to send
+    :param filename: name of file where data is found (used if data is None)
+    :return: length of data sent
+    """
+    # if no data was provided, try to open the filename where data should be
+    if data is None:
+        try:
+            unloaded_set = open(filename, "rb")
+            data = pickle.load(unloaded_set)
+        except Exception as e:
+            print(e)
+    
+    serialized_data = pickle.dumps(data, protocol=None)
+
+    # send length of data to the other party first
+    length_of_sent_data = send_outgoing_data_length(socketobj, serialized_data)
+    # send the actual data
+    socketobj.sendall(serialized_data)
+
+    return length_of_sent_data
+
+
 def receive_and_deserialize_data(socketobj, expected_data_length):
     """
     Receives expected_data_length data from the other side of the socket 
@@ -153,14 +180,14 @@ def receive_and_deserialize_data(socketobj, expected_data_length):
 
     return pickle.loads(serialized_data)
 
-def send_incoming_data_length(socketobj, data):
+def send_outgoing_data_length(socketobj, data):
     """
-    Sends the length of the incoming data to the other side of the socketobj. 
+    Sends the length of the outgoing data to the other side of the socketobj. 
     Used before the one party sends a larger amount of data. The data will be
     padded till it reaches 10 bytes before it is sent. I.e. if client sends
     6 items, it will send '6         ' to the server via this function first.
 
-    :param clientsocket: socket object with a connection to the other part
+    :param clientsocket: socket object with a connection to the other party
     :param data: data that party wants to send (client only sends size here)
     :return: the length of the data the party will send
     """
@@ -176,7 +203,7 @@ def get_incoming_data_length(clientsocket):
     Receives the length of data to receive from the other side of socketobj.
     Used before the other party sends a larger amount of data.
 
-    :param clientsocket: client's socket object with a connection to server
-    :return: the number of bytes the server will send
+    :param clientsocket: socket object with a connection to the other party
+    :return: the length of the data that the other party will send
     """
     return int(clientsocket.recv(10).decode().strip())
