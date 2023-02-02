@@ -199,6 +199,15 @@ def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base
     return enc_query_serialized
 
 def send_query_to_server(clientsocket, message_to_be_sent):
+    """
+    Serializes message_to_be_sent, then sends the size of message_to_be_sent
+    to the server, then sends message_to_be_sent itself to the server. Returns
+    the size of the message_to_be_sent in bytes.
+
+    :param clientsocket: client's socket
+    :param message_to_be_sent: non-serialized message client wants to send
+    :return: size of message_to_be_sent in bytes
+    """
 
     message_to_be_sent_serialized = pickle.dumps(message_to_be_sent, protocol=None)
 
