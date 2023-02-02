@@ -144,7 +144,6 @@ def receive_and_deserialize_data(socketobj, expected_data_length):
         server_to_client_communication_oprf: size of data sent by server
     """
 
-    # OPRF layer: the server receives the encoded set elements as curve points
     serialized_data = b""
 
     while len(serialized_data) < expected_data_length:
@@ -153,3 +152,31 @@ def receive_and_deserialize_data(socketobj, expected_data_length):
         serialized_data += data
 
     return pickle.loads(serialized_data)
+
+def send_incoming_data_length(socketobj, data):
+    """
+    Sends the length of the incoming data to the other side of the socketobj. 
+    Used before the one party sends a larger amount of data. The data will be
+    padded till it reaches 10 bytes before it is sent. I.e. if client sends
+    6 items, it will send '6         ' to the server via this function first.
+
+    :param clientsocket: socket object with a connection to the other part
+    :param data: data that party wants to send (client only sends size here)
+    :return: the length of the data the party will send
+    """
+    # prepare size, pad with spaces to reach 10 bytes, send data, return the length
+    msg_length = len(data)
+    padded_msg_length = str(msg_length) + ' ' * (10 - len(str(msg_length)))
+    socketobj.sendall((padded_msg_length).encode())
+
+    return msg_length
+
+def get_incoming_data_length(clientsocket):
+    """
+    Receives the length of data to receive from the other side of socketobj.
+    Used before the other party sends a larger amount of data.
+
+    :param clientsocket: client's socket object with a connection to server
+    :return: the number of bytes the server will send
+    """
+    return int(clientsocket.recv(10).decode().strip())
