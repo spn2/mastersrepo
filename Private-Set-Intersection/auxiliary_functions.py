@@ -160,16 +160,18 @@ def serialize_and_send_data(socketobj, data=None, filename=""):
     return length_of_sent_data
 
 
-def receive_and_deserialize_data(socketobj, expected_data_length):
+def get_and_deserialize_data(socketobj):
     """
-    Receives expected_data_length data from the other side of the socket 
-    connection. Deserializes the data before returning it.
+    Receives data from the other side of the socket connection.
+    Deserializes the data before returning it.
     
     :param clientsocket: client's socket object
     :returns:
-        PRFed_encoded_client_set: PRF-encoded client set
-        server_to_client_communication_oprf: size of data sent by server
+        deserialized data
+        length of the serialized data that was received
     """
+
+    expected_data_length = get_incoming_data_length(socketobj)
 
     serialized_data = b""
 
@@ -178,7 +180,7 @@ def receive_and_deserialize_data(socketobj, expected_data_length):
         if not data: break
         serialized_data += data
 
-    return pickle.loads(serialized_data)
+    return pickle.loads(serialized_data), len(serialized_data)
 
 def send_outgoing_data_length(socketobj, data):
     """

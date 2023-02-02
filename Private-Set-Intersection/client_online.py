@@ -6,6 +6,7 @@ from time import time
 from Pyfhel import Pyfhel, PyCtxt
 from rich.console import Console
 
+from auxiliary_functions import serialize_and_send_data, get_and_deserialize_data
 from constants import *
 from cuckoo_hash import reconstruct_item, Cuckoo
 from oprf import client_prf_online_parallel
@@ -29,11 +30,11 @@ def main():
         console.log("[yellow]FHE setup finished.[/yellow]")
 
         # send our EC embedded items to server
-        client_to_server_communiation_oprf = send_embedded_items_to_server(client, "client_preprocessed")
+        client_to_server_communiation_oprf = serialize_and_send_data(client, filename="client_preprocessed")
         console.log("[yellow]Elliptic curve embedded items sent to server.[/yellow]")
 
         # get the PRFed version of our set back from server
-        PRFed_encoded_client_set, server_to_client_communication_oprf = receive_PRFed_set(client)
+        PRFed_encoded_client_set, server_to_client_communication_oprf = get_and_deserialize_data(client)
         console.log("[yellow]PRFed items received from server.[/yellow]")
 
         t0 = time()
@@ -64,11 +65,11 @@ def main():
         # set up and serialize the query to be sent to the server
         message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
         # send query to server
-        client_to_server_communiation_query = send_query_to_server(client, message_to_be_sent)
+        client_to_server_communiation_query = serialize_and_send_data(client, data=message_to_be_sent)
         console.log("[yellow]Query sent to server, waiting for answer.[/yellow]")
 
         # get the ciphertexts from server
-        ciphertexts, server_to_client_query_response = receive_answer_from_server(client)
+        ciphertexts, server_to_client_query_response = get_and_deserialize_data(client)
         console.log("[yellow]Answer containing ciphertexts received from server.[/yellow]")
 
         t2 = time()
