@@ -1,4 +1,3 @@
-from math import log2
 import pickle
 import socket
 from time import time
@@ -18,17 +17,8 @@ def main():
     serv.bind(('localhost', 4470))
     serv.listen(1)
 
-
-
-    g = open('server_preprocessed', 'rb')
-    poly_coeffs = pickle.load(g)
-
-    # For the online phase of the server, we need to use the columns of the preprocessed database
-    transposed_poly_coeffs = np.transpose(poly_coeffs).tolist()
-
-
     # accept connection from client
-    conn, addr = serv.accept()
+    conn, _ = serv.accept()
 
 
     # OPRF layer: the server receives the encoded set elements as curve points
@@ -46,37 +36,13 @@ def main():
 
     HE_server, received_enc_query_serialized = server_FHE_setup(received_data)
 
-
-
-
-    received_enc_query = [[None for j in range(LOG_B_ELL)] for i in range(BASE - 1)]
-    for i in range(BASE - 1):
-        for j in range(LOG_B_ELL):
-            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
-                received_enc_query[i][j] = PyCtxt(pyfhel=HE_server, bytestring=received_enc_query_serialized[i][j])
+    encrypted_query = reconstruct_encrypted_query(HE_server, received_enc_query_serialized)
 
     # Here we recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity}), from the encrypted windowing of y.
     # These are needed to compute the polynomial of degree minibin_capacity
-    all_powers = [None for i in range(MINIBIN_CAP)]
-    for i in range(BASE - 1):
-        for j in range(LOG_B_ELL):
-            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
-                all_powers[(i + 1) * BASE ** j - 1] = received_enc_query[i][j]
+    all_powers = recover_encrypted_powers(encrypted_query)
 
-    for k in range(MINIBIN_CAP):
-        if all_powers[k] == None:
-            all_powers[k] = power_reconstruct(received_enc_query, k + 1)
-    all_powers = all_powers[::-1]
-
-    # Server sends alpha ciphertexts, obtained from performing dot_product between the polynomial coefficients from the preprocessed server database and all the powers Enc(y), ..., Enc(y^{minibin_capacity})
-    srv_answer = []
-    for i in range(ALPHA):
-        # the rows with index multiple of (B/alpha+1) have only 1's
-        dot_product = all_powers[0]
-        for j in range(1, MINIBIN_CAP):
-            dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + j] * all_powers[j]
-        dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + MINIBIN_CAP]
-        srv_answer.append(dot_product.to_bytes())
+    srv_answer = prepare_server_response(all_powers, "server_preprocessed")
 
     # The answer to be sent to the client is prepared
     length_of_data_sent_2 = serialize_and_send_data(conn, data=srv_answer)
@@ -101,6 +67,69 @@ def server_FHE_setup(received_data):
 
     return HE_server, received_enc_query_serialized
 
+def reconstruct_encrypted_query(pyfhelobj, serialized_query):
+    """
+    Given the client serialized (not via pickle) encrypted query, deserialize it.
+
+    :param pyfhelobj: the Pyfhel object
+    :param serialized_query: client serialized encrypted query
+    :return: deserialized query
+    """
+
+    deserialized_query = [[None for j in range(LOG_B_ELL)] for i in range(BASE - 1)]
+
+    for i in range(BASE - 1):
+        for j in range(LOG_B_ELL):
+            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
+                deserialized_query[i][j] = PyCtxt(pyfhel=pyfhelobj, bytestring=serialized_query[i][j])
+
+    return deserialized_query
+
+def recover_encrypted_powers(encrypted_query):
+    """
+    Recovers all the encrypted powers Encrypted(y), Encrypted(y^2), ..., Encrypted(y^{minibin_capacity}),
+    using the encrypted windowing of y.
+    "needed to compute the polynomial of degree minibin_capacity"
+
+    :param encrypted_query: deserialized query from client
+    :return: all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity})
+    """
+
+    all_powers = [None for i in range(MINIBIN_CAP)]
+
+    for i in range(BASE - 1):
+        for j in range(LOG_B_ELL):
+            if ((i + 1) * BASE ** j - 1 < MINIBIN_CAP):
+                all_powers[(i + 1) * BASE ** j - 1] = encrypted_query[i][j]
+
+    for k in range(MINIBIN_CAP):
+        if all_powers[k] == None:
+            all_powers[k] = power_reconstruct(encrypted_query, k + 1)
+    all_powers = all_powers[::-1]
+
+    return all_powers
+
+def prepare_server_response(all_powers, server_preprocessed_filename):
+    """
+    
+    """
+    g = open(server_preprocessed_filename, 'rb')
+    poly_coeffs = pickle.load(g)
+
+    # For the online phase of the server, we need to use the columns of the preprocessed database
+    transposed_poly_coeffs = np.transpose(poly_coeffs).tolist()
+
+    # Server sends alpha ciphertexts, obtained from performing dot_product between the polynomial coefficients from the preprocessed server database and all the powers Enc(y), ..., Enc(y^{minibin_capacity})
+    srv_answer = []
+    for i in range(ALPHA):
+        # the rows with index multiple of (B/alpha+1) have only 1's
+        dot_product = all_powers[0]
+        for j in range(1, MINIBIN_CAP):
+            dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + j] * all_powers[j]
+        dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + MINIBIN_CAP]
+        srv_answer.append(dot_product.to_bytes())
+
+    return srv_answer
 
 if __name__ == "__main__":
     main()
