@@ -51,10 +51,12 @@ def main():
     # set up and serialize the query to be sent to the server
     message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
 
+    # send query to server
     client_to_server_communiation_query = send_query_to_server(client, message_to_be_sent)
 
     print(" * Waiting for the servers's answer...")
 
+    # get the ciphertexts from server
     ciphertexts, server_to_client_query_response = receive_answer_from_server(client)
 
     t2 = time()
@@ -72,6 +74,8 @@ def main():
     print('  Communication size:')
     print('    ~ Client --> Server:  {:.2f} MB'.format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
     print('    ~ Server --> Client:  {:.2f} MB'.format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
+
+    # disconnect from server
     client.close()
 
 def client_FHE_setup(polynomial_modulus, coefficient_modulus):
@@ -96,24 +100,43 @@ def client_FHE_setup(polynomial_modulus, coefficient_modulus):
 
     return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
 
+def send_bytes_to_send_to_server(clientsocket, data):
+    """
+    Sends the length of data to send to the server. 
+    Used before the client sends a larger amount of data. The data will be
+    padded till it reaches 10 bytes before it is sent. I.e. if client sends
+    6 items, it will send '6         ' to the server via this function first.
+
+    :param clientsocket: client's socket object with a connection to server
+    :param data: data that client wants to send (client only sends size here)
+    :return: the number of bytes the client will send
+    """
+    
+    # prepare size, pad with spaces to reach 10 bytes, send data, return the length
+    msg_length = len(data)
+    padded_length = str(msg_length) + ' ' * (10 - len(str(msg_length)))
+    clientsocket.sendall((padded_length).encode())
+
+    return msg_length
+
+
 def send_embedded_items_to_server(clientsocket, preprocessed_file):
     """
     Opens the client's preprocessed set, serializes it and sends it to the server.
 
     :param clientsocket: client's socket object
     :preprocessed_file: filename of client's preprocessed dataset (output of client_offline.py)
+    :return: length of data sent from client to server
     """
-    # We prepare the partially OPRF processed database to be sent to the server
-    pickle_off = open(preprocessed_file, "rb")
-    encoded_client_set = pickle.load(pickle_off)
+
+    # Open and serialize client's preprocessed set
+    unloaded_set = open(preprocessed_file, "rb")
+    encoded_client_set = pickle.load(unloaded_set)
     encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
 
-
-    msg_length = len(encoded_client_set_serialized)
-    sL = str(msg_length) + ' ' * (10 - len(str(msg_length)))
-    client_to_server_communiation_oprf = msg_length #in bytes
-    # The length of the message is sent first
-    clientsocket.sendall((sL).encode())
+    # send length of data to server first
+    client_to_server_communiation_oprf = send_bytes_to_send_to_server(clientsocket, encoded_client_set_serialized)
+    # then send the data
     clientsocket.sendall(encoded_client_set_serialized)
 
     return client_to_server_communiation_oprf
