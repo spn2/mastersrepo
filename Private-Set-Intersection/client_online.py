@@ -55,19 +55,9 @@ def main():
 
     print(" * Waiting for the servers's answer...")
 
-    # server tells us how much we will receive for next step
-    # The answer obtained from the server:
-    bytes_to_receive = int(client.recv(10).decode().strip())
+    ciphertexts, server_to_client_query_response = receive_answer_from_server(client)
 
-    answer = b""
-    while len(answer) < bytes_to_receive:
-        data = client.recv(4096)
-        if not data: break
-        answer += data
     t2 = time()
-    server_to_client_query_response = len(answer) #bytes
-    # Here is the vector of decryptions of the answer
-    ciphertexts = pickle.loads(answer)
     decryptions = []
     for ct in ciphertexts:
         decryptions.append(PyCtxt(bytestring=ct, pyfhel=HEctx, scheme="bfv").decrypt())
@@ -235,7 +225,26 @@ def send_query_to_server(clientsocket, message_to_be_sent):
     return client_to_server_communiation_query
 
 def receive_answer_from_server(clientsocket):
-    pass
+    """
+    Receive the answer to the query (see send_query_to_server) from server.
+
+    :param clientsocket: client's socket that is connected to server
+    :return:
+        ciphertexts - the unserialized ciphertexts (answers)
+        server_to_client_query_response - size of the response (size of serialized ciphertexts)
+    """
+    bytes_to_receive = get_bytes_to_receive_from_server(clientsocket)
+
+    answer = b""
+    while len(answer) < bytes_to_receive:
+        data = clientsocket.recv(4096)
+        if not data: break
+        answer += data
+    server_to_client_query_response = len(answer) #bytes
+    # Here is the vector of decryptions of the answer
+    ciphertexts = pickle.loads(answer)
+
+    return ciphertexts, server_to_client_query_response
 
     
 
