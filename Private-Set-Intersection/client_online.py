@@ -114,80 +114,6 @@ def client_FHE_setup(polynomial_modulus, coefficient_modulus):
 
     return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
 
-def send_bytes_to_send_to_server(clientsocket, data):
-    """
-    Sends the length of data to send to the server. 
-    Used before the client sends a larger amount of data. The data will be
-    padded till it reaches 10 bytes before it is sent. I.e. if client sends
-    6 items, it will send '6         ' to the server via this function first.
-
-    :param clientsocket: client's socket object with a connection to server
-    :param data: data that client wants to send (client only sends size here)
-    :return: the number of bytes the client will send
-    """
-    
-    # prepare size, pad with spaces to reach 10 bytes, send data, return the length
-    msg_length = len(data)
-    padded_msg_length = str(msg_length) + ' ' * (10 - len(str(msg_length)))
-    clientsocket.sendall((padded_msg_length).encode())
-
-    return msg_length
-
-
-def send_embedded_items_to_server(clientsocket, preprocessed_file):
-    """
-    Opens the client's preprocessed set, serializes it and sends it to the server.
-
-    :param clientsocket: client's socket object
-    :preprocessed_file: filename of client's preprocessed dataset (output of client_offline.py)
-    :return: length of data sent from client to server
-    """
-
-    # Open and serialize client's preprocessed set
-    unloaded_set = open(preprocessed_file, "rb")
-    encoded_client_set = pickle.load(unloaded_set)
-    encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
-
-    # send length of data to server first
-    client_to_server_communiation_oprf = send_bytes_to_send_to_server(clientsocket, encoded_client_set_serialized)
-    # then send the data
-    clientsocket.sendall(encoded_client_set_serialized)
-
-    return client_to_server_communiation_oprf
-
-def get_bytes_to_receive_from_server(clientsocket):
-    """
-    Receives the amount of bytes to receive from the server, from the server.
-    Used before the server sends a larger amount of data.
-
-    :param clientsocket: client's socket object with a connection to server
-    :return: the number of bytes the server will send
-    """
-    return int(clientsocket.recv(10).decode().strip())
-
-def receive_PRFed_set(clientsocket):
-    """
-    Receives the (serialized) PRF-processed set from the server. Unserializes the
-    set and returns it along with the length of the serialized data.
-    
-    :param clientsocket: client's socket object
-    :returns:
-        PRFed_encoded_client_set: PRF-encoded client set
-        server_to_client_communication_oprf: size of data sent by server
-    """
-
-    bytes_to_receive = get_bytes_to_receive_from_server(clientsocket)
-
-    PRFed_client_set_serialized = b""
-    while len(PRFed_client_set_serialized) < bytes_to_receive:
-        data = clientsocket.recv(4096)
-        if not data: break
-        PRFed_client_set_serialized += data
-
-    PRFed_client_set = pickle.loads(PRFed_client_set_serialized)
-
-    return PRFed_client_set, len(PRFed_client_set_serialized)
-
 def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base, minibin_cap):
     """
     Given a list of windowed items, returns a serialized and batched query to be sent to the server.
@@ -217,49 +143,6 @@ def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base
                 enc_query_serialized[j][i] = enc_query[j][i].to_bytes()
 
     return enc_query_serialized
-
-def send_query_to_server(clientsocket, message_to_be_sent):
-    """
-    Serializes message_to_be_sent, then sends the size of message_to_be_sent
-    to the server, then sends message_to_be_sent itself to the server. Returns
-    the size of the message_to_be_sent in bytes.
-
-    :param clientsocket: client's socket
-    :param message_to_be_sent: non-serialized message client wants to send
-    :return: size of message_to_be_sent in bytes
-    """
-
-    message_to_be_sent_serialized = pickle.dumps(message_to_be_sent, protocol=None)
-
-    # send length of data first
-    client_to_server_communiation_query = send_bytes_to_send_to_server(clientsocket, message_to_be_sent_serialized)
-    # print("context + ciphertext -> server")
-    # then send the actual data
-    clientsocket.sendall(message_to_be_sent_serialized)
-
-    return client_to_server_communiation_query
-
-def receive_answer_from_server(clientsocket):
-    """
-    Receive the answer to the query (see send_query_to_server) from server.
-
-    :param clientsocket: client's socket that is connected to server
-    :return:
-        ciphertexts - the unserialized ciphertexts (answers)
-        server_to_client_query_response - size of the response (size of serialized ciphertexts)
-    """
-
-    bytes_to_receive = get_bytes_to_receive_from_server(clientsocket)
-
-    answer = b""
-    while len(answer) < bytes_to_receive:
-        data = clientsocket.recv(4096)
-        if not data: break
-        answer += data
-
-    ciphertexts = pickle.loads(answer)
-
-    return ciphertexts, len(answer)
 
 def decrypt_ciphertexts(pyfhelctx, ciphertexts, scheme="bfv"):
     """

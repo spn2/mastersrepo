@@ -132,7 +132,8 @@ def unpack_list_of_lists(lists):
     return unpacked
 
 
-# online functions
+# functions for sending/receiving data for the online phase
+
 def serialize_and_send_data(socketobj, data=None, filename=""):
     """
     Sends data to the other part of the socketobj.
@@ -167,8 +168,8 @@ def get_and_deserialize_data(socketobj):
     
     :param clientsocket: client's socket object
     :returns:
-        deserialized data
-        length of the serialized data that was received
+        deserialized_data: deserialized data
+        serialized_data_length: length of the serialized data that was received
     """
 
     expected_data_length = get_incoming_data_length(socketobj)
@@ -180,7 +181,10 @@ def get_and_deserialize_data(socketobj):
         if not data: break
         serialized_data += data
 
-    return pickle.loads(serialized_data), len(serialized_data)
+    serialized_data_length = len(serialized_data)
+    deserialized_data = pickle.loads(serialized_data)
+
+    return deserialized_data, serialized_data_length
 
 def send_outgoing_data_length(socketobj, data):
     """

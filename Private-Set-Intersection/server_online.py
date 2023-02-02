@@ -6,7 +6,7 @@ from time import time
 import numpy as np
 from Pyfhel import Pyfhel, PyCtxt
 
-from auxiliary_functions import power_reconstruct
+from auxiliary_functions import get_and_deserialize_data, power_reconstruct, serialize_and_send_data
 from constants import *
 from oprf import server_prf_online_parallel
 from oprf_constants import OPRF_SERVER_KEY
@@ -29,56 +29,25 @@ def main():
 
     # accept connection from client
     conn, addr = serv.accept()
-    data_length_to_get_from_client = int(conn.recv(10).decode().strip())
+
 
     # OPRF layer: the server receives the encoded set elements as curve points
-    encoded_client_set_serialized = b""
-    while len(encoded_client_set_serialized) < data_length_to_get_from_client:
-        data = conn.recv(4096)
-        if not data: break
-        encoded_client_set_serialized += data   
-    encoded_client_set = pickle.loads(encoded_client_set_serialized)
+    encoded_client_set, length_of_data_received_1 = get_and_deserialize_data(conn)
 
-
-
-    t0 = time()
     # The server computes (parallel computation) the online part of the OPRF protocol, using its own secret key
     PRFed_encoded_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
-    PRFed_encoded_client_set_serialized = pickle.dumps(PRFed_encoded_client_set, protocol=None)
-    L = len(PRFed_encoded_client_set_serialized)
-    sL = str(L) + ' ' * (10 - len(str(L))) #pad len to 10 bytes
 
-
-
-    conn.sendall((sL).encode())
-    conn.sendall(PRFed_encoded_client_set_serialized)    
-    print(' * OPRF layer done!')
-    t1 = time()
-    L = conn.recv(10).decode().strip()
-    L = int(L, 10)
-
-    # The server receives bytes that represent the public HE context and the query ciphertext
-    final_data = b""
-    while len(final_data) < L:
-        data = conn.recv(4096)
-        if not data: break
-        final_data += data
-
-    t2 = time()    
+    # send the resulting PRF-ed client set
+    length_of_data_sent_1 = serialize_and_send_data(conn, PRFed_encoded_client_set)
+ 
     # Here we recover the context and ciphertext received from the received bytes
     # message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
-    received_data = pickle.loads(final_data)
+    received_data, length_of_data_received_2 = get_and_deserialize_data(conn)
+
+    HE_server, received_enc_query_serialized = server_FHE_setup(received_data)
 
 
-    print(type(received_data))
 
-    HE_server = Pyfhel()
-    HE_server.from_bytes_context(received_data[0])
-    HE_server.from_bytes_public_key(received_data[1])
-    HE_server.from_bytes_relin_key(received_data[2])
-    HE_server.from_bytes_rotate_key(received_data[3])
-
-    received_enc_query_serialized = received_data[4]
 
     received_enc_query = [[None for j in range(LOG_B_ELL)] for i in range(BASE - 1)]
     for i in range(BASE - 1):
@@ -110,19 +79,27 @@ def main():
         srv_answer.append(dot_product.to_bytes())
 
     # The answer to be sent to the client is prepared
-    response_to_be_sent = pickle.dumps(srv_answer, protocol=None)
-    t3 = time()
-    L = len(response_to_be_sent)
-    sL = str(L) + ' ' * (10 - len(str(L))) #pad len to 10 bytes
-
-    conn.sendall((sL).encode())
-    conn.sendall(response_to_be_sent)
+    length_of_data_sent_2 = serialize_and_send_data(conn, data=srv_answer)
 
     # Close the connection
     print("Client disconnected \n")
-    print('Server ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
+    # print('Server ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
 
     conn.close()
+
+def server_FHE_setup(received_data):
+    """
+    get client blabla
+    """
+    HE_server = Pyfhel()
+    HE_server.from_bytes_context(received_data[0])
+    HE_server.from_bytes_public_key(received_data[1])
+    HE_server.from_bytes_relin_key(received_data[2])
+    HE_server.from_bytes_rotate_key(received_data[3])
+
+    received_enc_query_serialized = received_data[4]
+
+    return HE_server, received_enc_query_serialized
 
 
 if __name__ == "__main__":
