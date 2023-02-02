@@ -13,17 +13,20 @@ dummy_msg_client = 2 ** (SIGMA_MAX - OUTPUT_BITS + LOG_NO_HASHES)
 
 def main():
 
+    # connect to server
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(('localhost', 4470))
 
+    # FHE setup
     HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
 
-
+    # send our EC embedded items to server
     client_to_server_communiation_oprf = send_embedded_items_to_server(client, "client_preprocessed")
 
     # server tells us how much we will receive for next step
     bytes_to_receive = int(client.recv(10).decode().strip())
 
+    # get the PRFed version of our set back from server
     PRFed_encoded_client_set, server_to_client_communication_oprf = receive_PRFed_set(client, bytes_to_receive)
 
     t0 = time()
@@ -43,31 +46,24 @@ def main():
     # We apply the windowing procedure for each item from the Cuckoo structure
     windowed_items =  CH.windowing(MINIBIN_CAP, PLAIN_MOD)
 
-
+    # batching
     enc_query_serialized = create_and_seralize_batched_query(HEctx, windowed_items, LOG_B_ELL, BASE, MINIBIN_CAP)
 
+    t1 = time()
+    
+    # set up and serialize the query to be sent to the server
     message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
 
-
-    message_to_be_sent_serialized = pickle.dumps(message_to_be_sent, protocol=None)
-    t1 = time()
-
-    L = len(message_to_be_sent_serialized)
-    sL = str(L) + ' ' * (10 - len(str(L)))
-    client_to_server_communiation_query = L 
-    #the lenght of the message is sent first
-    client.sendall((sL).encode())
-    print(" * Sending the context and ciphertext to the server....")
-    # Now we send the message to the server
-    client.sendall(message_to_be_sent_serialized)
+    client_to_server_communiation_query = send_query_to_server(client, message_to_be_sent)
 
     print(" * Waiting for the servers's answer...")
 
+    # server tells us how much we will receive for next step
     # The answer obtained from the server:
-    L = client.recv(10).decode().strip()
-    L = int(L, 10)
+    bytes_to_receive = int(client.recv(10).decode().strip())
+
     answer = b""
-    while len(answer) < L:
+    while len(answer) < bytes_to_receive:
         data = client.recv(4096)
         if not data: break
         answer += data
@@ -175,10 +171,12 @@ def receive_PRFed_set(clientsocket, bytes_to_receive):
 
 def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base, minibin_cap):
     """
+    Given a list of windowed items, returns a serialized and batched query to be sent to the server.
+    Using the provided Pyfhel object, pyfhelctx, the query is of course encrypted.
     
     :param pyfhelctx: the Pyfhel object
     :param windowed_items: client's windowed items
-    :return: enc_query_serialized
+    :return: batched query
     """
     plain_query = [None for k in range(len(windowed_items))]
     enc_query = [[None for j in range(log_b_ell)] for i in range(1, base)]
@@ -199,6 +197,21 @@ def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base
                 enc_query_serialized[i][j] = enc_query[i][j].to_bytes()
 
     return enc_query_serialized
+
+def send_query_to_server(clientsocket, message_to_be_sent):
+
+    message_to_be_sent_serialized = pickle.dumps(message_to_be_sent, protocol=None)
+
+    length_of_query = len(message_to_be_sent_serialized)
+    sL = str(length_of_query) + ' ' * (10 - len(str(length_of_query)))
+    client_to_server_communiation_query = length_of_query 
+    #the lenght of the message is sent first
+    clientsocket.sendall((sL).encode())
+    print(" * Sending the context and ciphertext to the server....")
+    # Now we send the message to the server
+    clientsocket.sendall(message_to_be_sent_serialized)
+
+    return client_to_server_communiation_query
 
     
 
