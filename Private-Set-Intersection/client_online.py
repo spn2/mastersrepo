@@ -58,9 +58,8 @@ def main():
     ciphertexts, server_to_client_query_response = receive_answer_from_server(client)
 
     t2 = time()
-    decryptions = []
-    for ct in ciphertexts:
-        decryptions.append(PyCtxt(bytestring=ct, pyfhel=HEctx, scheme="bfv").decrypt())
+
+    decryptions = decrypt_ciphertexts(HEctx, ciphertexts)
 
     recover_CH_structure = []
     for matrix in windowed_items:
@@ -246,7 +245,56 @@ def receive_answer_from_server(clientsocket):
 
     return ciphertexts, server_to_client_query_response
 
-    
+def decrypt_ciphertexts(pyfhelctx, ciphertexts, scheme="bfv"):
+    """
+    Decrypts a lits of ciphertexts, returns a list of plaintexts.
+
+    :param pyfhelctx: the Pyfhel object
+    :param ciphertexts: list of ciphertexts
+    :param scheme: the FHE scheme, default to BFV (Brakerski-Fan-Vercauteren)
+    :return: list of plaintexts
+    """
+
+    decryptions = []
+    for ct in ciphertexts:
+        decryptions.append(PyCtxt(bytestring=ct, pyfhel=pyfhelctx, scheme=scheme).decrypt())
+    return decryptions
+
+def find_client_intersection(pyfhelctx, ciphertexts, windowed_items, PRFed_client_set, scheme="bfv"):
+    """
+
+    :param windowed_items: client's windowed items
+    :param PRFed_client_set: client's PRFed client set
+    """
+
+    recover_CH_structure = []
+    for matrix in windowed_items:
+        recover_CH_structure.append(matrix[0][0])
+
+    count = [0] * ALPHA
+
+    g = open('client_set', 'r')
+    client_set_entries = g.readlines()
+    g.close()
+    client_intersection = []
+    for j in range(ALPHA):
+        for i in range(POLY_MOD):
+            if decryptions[j][i] == 0:
+                count[j] = count[j] + 1
+
+                # The index i is the location of the element in the intersection
+                # Here we recover this element from the Cuckoo hash structure
+                PRFed_common_element = reconstruct_item(recover_CH_structure[i], i, HASH_SEEDS[recover_CH_structure[i] % (2 ** LOG_NO_HASHES)])
+                index = PRFed_client_set.index(PRFed_common_element)
+                client_intersection.append(int(client_set_entries[index][:-1]))
+
+def check_recovered_real_intersection():
+    """
+    Checks if the client recovered the real intersection. Should evaluate to true
+    if protocol is right.
+    """
+    # set(client_intersection) == set(real_intersection)
+    pass
 
 if __name__ == "__main__":
     main()
