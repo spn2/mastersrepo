@@ -59,34 +59,14 @@ def main():
 
     t2 = time()
 
+    # decrypt ciphertexts
     decryptions = decrypt_ciphertexts(HEctx, ciphertexts)
 
-    recover_CH_structure = []
-    for matrix in windowed_items:
-        recover_CH_structure.append(matrix[0][0])
+    # find the client's intersection with the server set (as found by the PSI protocol)
+    PSI_intersection = find_client_intersection(decryptions, windowed_items, PRFed_client_set)
 
-    count = [0] * ALPHA
-
-    g = open('client_set', 'r')
-    client_set_entries = g.readlines()
-    g.close()
-    client_intersection = []
-    for j in range(ALPHA):
-        for i in range(POLY_MOD):
-            if decryptions[j][i] == 0:
-                count[j] = count[j] + 1
-
-                # The index i is the location of the element in the intersection
-                # Here we recover this element from the Cuckoo hash structure
-                PRFed_common_element = reconstruct_item(recover_CH_structure[i], i, HASH_SEEDS[recover_CH_structure[i] % (2 ** LOG_NO_HASHES)])
-                index = PRFed_client_set.index(PRFed_common_element)
-                client_intersection.append(int(client_set_entries[index][:-1]))
-
-    h = open('intersection', 'r')
-    real_intersection = [int(line[:-1]) for line in h]
-    h.close()
     t3 = time()
-    print('\n Intersection recovered correctly: {}'.format(set(client_intersection) == set(real_intersection)))
+    print('\n Intersection recovered correctly: {}'.format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
     print("Disconnecting...\n")
     print('  Client ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
     print('  Communication size:')
@@ -260,11 +240,15 @@ def decrypt_ciphertexts(pyfhelctx, ciphertexts, scheme="bfv"):
         decryptions.append(PyCtxt(bytestring=ct, pyfhel=pyfhelctx, scheme=scheme).decrypt())
     return decryptions
 
-def find_client_intersection(pyfhelctx, ciphertexts, windowed_items, PRFed_client_set, scheme="bfv"):
+def find_client_intersection(decryptions, windowed_items, PRFed_client_set,):
     """
+    Finds the client's intersection given the list of decrypted answers from the server,
+    the client's windowed items, and the PRF-processed client set.
 
+    :param decryptions: list of decrypted ciphertexts
     :param windowed_items: client's windowed items
     :param PRFed_client_set: client's PRFed client set
+    :return: the client's intersection with the server set
     """
 
     recover_CH_structure = []
@@ -288,13 +272,22 @@ def find_client_intersection(pyfhelctx, ciphertexts, windowed_items, PRFed_clien
                 index = PRFed_client_set.index(PRFed_common_element)
                 client_intersection.append(int(client_set_entries[index][:-1]))
 
-def check_recovered_real_intersection():
+    return client_intersection
+
+def check_if_recovered_real_intersection(PSI_intersection, real_intersection_file):
     """
     Checks if the client recovered the real intersection. Should evaluate to true
     if protocol is right.
+
+    :param PSI_intersection: list representing the intersection as calculated by the PSI protocol
+    :param real_intersection_file: filename of file containing the real client/server set intersection
+    :return: boolean indicating whether the correct intersection was recovered or not
     """
-    # set(client_intersection) == set(real_intersection)
-    pass
+    h = open(real_intersection_file, 'r')
+    real_intersection = [int(line[:-1]) for line in h]
+    h.close()
+    
+    return set(PSI_intersection) == set(real_intersection)
 
 if __name__ == "__main__":
     main()
