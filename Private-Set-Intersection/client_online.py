@@ -1,11 +1,13 @@
-from Pyfhel import Pyfhel, PyCtxt
-from time import time
-import socket
-import pickle
 from math import log2
+import pickle
+import socket
+from time import time
+
+from Pyfhel import Pyfhel, PyCtxt
+from rich.console import Console
+
 from constants import *
 from cuckoo_hash import reconstruct_item, Cuckoo
-from auxiliary_functions import windowing
 from oprf import client_prf_online_parallel
 from oprf_constants import GENERATOR_ORDER, OPRF_CLIENT_KEY
 
@@ -13,69 +15,81 @@ dummy_msg_client = 2 ** (SIGMA_MAX - OUTPUT_BITS + LOG_NO_HASHES)
 
 def main():
 
-    # connect to server
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('localhost', 4470))
+    # for prettier printing
+    console = Console()
 
-    # FHE setup
-    HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
+    with console.status("[bold green]Client online in progress...") as status:
 
-    # send our EC embedded items to server
-    client_to_server_communiation_oprf = send_embedded_items_to_server(client, "client_preprocessed")
+        # connect to server
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(('localhost', 4470))
 
-    # get the PRFed version of our set back from server
-    PRFed_encoded_client_set, server_to_client_communication_oprf = receive_PRFed_set(client)
+        # FHE setup
+        HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
+        console.log("[yellow]FHE setup finished.[/yellow]")
 
-    t0 = time()
+        # send our EC embedded items to server
+        client_to_server_communiation_oprf = send_embedded_items_to_server(client, "client_preprocessed")
+        console.log("[yellow]Elliptic curve embedded items sent to server.[/yellow]")
 
-    # We finalize the OPRF processing by applying the inverse of the secret key, oprf_client_key
-    key_inverse = pow(OPRF_CLIENT_KEY, -1, GENERATOR_ORDER)
-    PRFed_client_set = client_prf_online_parallel(PRFed_encoded_client_set, key_inverse)
+        # get the PRFed version of our set back from server
+        PRFed_encoded_client_set, server_to_client_communication_oprf = receive_PRFed_set(client)
+        console.log("[yellow]PRFed items received from server.[/yellow]")
 
-    print(' * OPRF protocol done!')
+        t0 = time()
 
-    # Each PRFed item from the client set is mapped to a Cuckoo hash table
-    # We pad the Cuckoo vector with dummy messages
-    CH = Cuckoo(HASH_SEEDS)
-    CH.insert_items(PRFed_client_set)
-    CH.pad(dummy_msg_client)
+        # We finalize the OPRF processing by applying the inverse of the secret key, oprf_client_key
+        key_inverse = pow(OPRF_CLIENT_KEY, -1, GENERATOR_ORDER)
+        PRFed_client_set = client_prf_online_parallel(PRFed_encoded_client_set, key_inverse)
+        console.log("[yellow]OPRF processing finished.[/yellow]")
 
-    # We apply the windowing procedure for each item from the Cuckoo structure
-    windowed_items =  CH.windowing(MINIBIN_CAP, PLAIN_MOD)
+        # Each PRFed item from the client set is mapped to a Cuckoo hash table
+        # We pad the Cuckoo vector with dummy messages
+        CH = Cuckoo(HASH_SEEDS)
+        CH.insert_items(PRFed_client_set)
+        CH.pad(dummy_msg_client)
 
-    # batching
-    enc_query_serialized = create_and_seralize_batched_query(HEctx, windowed_items, LOG_B_ELL, BASE, MINIBIN_CAP)
+        console.log("[yellow]PRF-encoded items inserted into Cuckoo hash table.[/yellow]")
 
-    t1 = time()
-    
-    # set up and serialize the query to be sent to the server
-    message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
-    # send query to server
-    client_to_server_communiation_query = send_query_to_server(client, message_to_be_sent)
+        # Window procedure for all the items in the CH table
+        windowed_items =  CH.windowing(MINIBIN_CAP, PLAIN_MOD)
+        console.log("[yellow]Windowing procedure applied to items in the Cuckoo hash table.[/yellow]")
 
-    print(" * Waiting for the servers's answer...")
+        # batching
+        enc_query_serialized = create_and_seralize_batched_query(HEctx, windowed_items, LOG_B_ELL, BASE, MINIBIN_CAP)
+        console.log("[yellow]Batched query finalized.[/yellow]")
 
-    # get the ciphertexts from server
-    ciphertexts, server_to_client_query_response = receive_answer_from_server(client)
+        t1 = time()
+        
+        # set up and serialize the query to be sent to the server
+        message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
+        # send query to server
+        client_to_server_communiation_query = send_query_to_server(client, message_to_be_sent)
+        console.log("[yellow]Query sent to server, waiting for answer.[/yellow]")
 
-    t2 = time()
+        # get the ciphertexts from server
+        ciphertexts, server_to_client_query_response = receive_answer_from_server(client)
+        console.log("[yellow]Answer containing ciphertexts received from server.[/yellow]")
 
-    # decrypt ciphertexts
-    decryptions = decrypt_ciphertexts(HEctx, ciphertexts)
+        t2 = time()
 
-    # find the client's intersection with the server set (as found by the PSI protocol)
-    PSI_intersection = find_client_intersection(decryptions, windowed_items, PRFed_client_set)
+        # decrypt ciphertexts
+        decryptions = decrypt_ciphertexts(HEctx, ciphertexts)
+        console.log("[yellow]Ciphertexts decrypted.[/yellow]")
 
-    t3 = time()
-    print('\n Intersection recovered correctly: {}'.format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
-    print("Disconnecting...\n")
-    print('  Client ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
-    print('  Communication size:')
-    print('    ~ Client --> Server:  {:.2f} MB'.format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
-    print('    ~ Server --> Client:  {:.2f} MB'.format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
+        # find the client's intersection with the server set (as found by the PSI protocol)
+        PSI_intersection = find_client_intersection(decryptions, windowed_items, PRFed_client_set)
+        console.log("[yellow]Client and server intersection found.[/yellow]")
 
-    # disconnect from server
-    client.close()
+        t3 = time()
+        console.log("\n[yellow]Intersection recovered correctly: {}[/yellow]".format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
+        console.log("[yellow]Client ONLINE computation time {:.2f}s[/yellow]".format(t1 - t0 + t3 - t2))
+        console.log("[yellow]Communication size:[/yellow]")
+        console.log("[yellow]~ Client --> Server:  {:.2f} MB[/yellow]".format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
+        console.log("[yellow]~ Server --> Client:  {:.2f} MB[/yellow]".format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
+
+        # disconnect from server
+        client.close()
 
 def client_FHE_setup(polynomial_modulus, coefficient_modulus):
     """

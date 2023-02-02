@@ -11,7 +11,7 @@ def main():
     # for prettier printing
     console = Console()
 
-    with console.status("[bold green]Client offline in progress...") as status:
+    with console.status("[bold red]Client offline in progress...") as status:
 
         t0 = time()
 
@@ -26,7 +26,7 @@ def main():
 
         t1 = time()
 
-        console.log("[green]Client OPRF preprocessing finished. Time taken: {:.2f}s.[/green]".format(t1-t0))
+        console.log("[yellow]OPRF preprocessing finished. Time taken: {:.2f}s.[/yellow]".format(t1-t0))
 
 
         # write the preprocessed client's set to disk

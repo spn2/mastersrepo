@@ -17,7 +17,7 @@ def main():
     # for prettier printing
     console = Console()
 
-    with console.status("[bold green]Server offline in progress...") as status:
+    with console.status("[bold red]Server offline in progress...") as status:
 
         # store server's set in memory 
         server_set = read_file_return_list("server_set")
@@ -32,7 +32,7 @@ def main():
 
         t1 = time()
 
-        console.log("[green]OPRF preprocessing finished (server items are embedded on the ellipctic curve). Time taken: {:.2f}s.[/green]".format(t1-t0))
+        console.log("[yellow]OPRF preprocessing finished (server items are embedded on the ellipctic curve). Time taken: {:.2f}s.[/yellow]".format(t1-t0))
 
         # Server's OPRFed items are hashed and padded (see simple_hash.py)
         SH = Simple_hash(HASH_SEEDS)
@@ -41,7 +41,7 @@ def main():
 
         t2 = time()
 
-        console.log("[green]Simple hashing finished (server items are in bins). Time taken: {:.2f}s.[/green]".format(t2-t1))
+        console.log("[yellow]Simple hashing finished (server items are in bins). Time taken: {:.2f}s.[/yellow]".format(t2-t1))
 
         poly_coeffs = SH.partition(ALPHA, MINIBIN_CAP, PLAIN_MOD)
 
@@ -51,7 +51,7 @@ def main():
         
         t3 = time()
 
-        console.log("[green]Finished partitioning (coefficients of minibin polynomials found). Time taken: {:.2f}s.[/green]".format(t3-t2))
+        console.log("[yellow]Finished partitioning (coefficients of minibin polynomials found). Time taken: {:.2f}s.[/yellow]".format(t3-t2))
 
         console.log("[blue]Server offline total time: {:.2f}s[/blue]".format(t3-t0))
 
