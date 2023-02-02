@@ -23,11 +23,8 @@ def main():
     # send our EC embedded items to server
     client_to_server_communiation_oprf = send_embedded_items_to_server(client, "client_preprocessed")
 
-    # server tells us how much we will receive for next step
-    bytes_to_receive = int(client.recv(10).decode().strip())
-
     # get the PRFed version of our set back from server
-    PRFed_encoded_client_set, server_to_client_communication_oprf = receive_PRFed_set(client, bytes_to_receive)
+    PRFed_encoded_client_set, server_to_client_communication_oprf = receive_PRFed_set(client)
 
     t0 = time()
 
@@ -152,13 +149,28 @@ def send_embedded_items_to_server(clientsocket, preprocessed_file):
 
     return client_to_server_communiation_oprf
 
-def receive_PRFed_set(clientsocket, bytes_to_receive):
+def get_bytes_to_receive_from_server(clientsocket):
+    """
+    Receives the amount of bytes to receive from the server, from the server.
+    Used before the server sends a larger amount of data.
+
+    :param clientsocket: client's socket object with a connection to server
+    :return: the number of bytes the server will send
+    """
+    return int(clientsocket.recv(10).decode().strip())
+
+def receive_PRFed_set(clientsocket):
     """
     Receives the PRF-processed set from the server.
     
     :param clientsocket: client's socket object
-    :param bytes_to_receive: how many bytes we expect to receive from the server
+    :returns:
+        PRFed_encoded_client_set: PRF-encoded client set
+        server_to_client_communication_oprf: size of data sent by server
     """
+
+    bytes_to_receive = get_bytes_to_receive_from_server(clientsocket)
+
     PRFed_encoded_client_set_serialized = b""
     while len(PRFed_encoded_client_set_serialized) < bytes_to_receive:
         data = clientsocket.recv(4096)
@@ -221,6 +233,9 @@ def send_query_to_server(clientsocket, message_to_be_sent):
     clientsocket.sendall(message_to_be_sent_serialized)
 
     return client_to_server_communiation_query
+
+def receive_answer_from_server(clientsocket):
+    pass
 
     
 
