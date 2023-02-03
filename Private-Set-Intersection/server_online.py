@@ -12,27 +12,21 @@ from oprf_constants import OPRF_SERVER_KEY
 
 
 def main():
-    # ready socket object and listen for incoming connection
-    serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serv.bind(('localhost', 4470))
-    serv.listen(1)
 
-    # accept connection from client
-    conn, _ = serv.accept()
-
+    conn_socket = server_network_setup()
 
     # OPRF layer: the server receives the encoded set elements as curve points
-    encoded_client_set, length_of_data_received_1 = get_and_deserialize_data(conn)
+    encoded_client_set, length_of_data_received_1 = get_and_deserialize_data(conn_socket)
 
     # The server computes (parallel computation) the online part of the OPRF protocol, using its own secret key
     PRFed_encoded_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
 
     # send the resulting PRF-ed client set
-    length_of_data_sent_1 = serialize_and_send_data(conn, PRFed_encoded_client_set)
+    length_of_data_sent_1 = serialize_and_send_data(conn_socket, PRFed_encoded_client_set)
  
     # Here we recover the context and ciphertext received from the received bytes
     # message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
-    received_data, length_of_data_received_2 = get_and_deserialize_data(conn)
+    received_data, length_of_data_received_2 = get_and_deserialize_data(conn_socket)
 
     HE_server, received_enc_query_serialized = server_FHE_setup(received_data)
 
@@ -45,13 +39,29 @@ def main():
     srv_answer = prepare_server_response(all_powers, "server_preprocessed")
 
     # The answer to be sent to the client is prepared
-    length_of_data_sent_2 = serialize_and_send_data(conn, data=srv_answer)
+    length_of_data_sent_2 = serialize_and_send_data(conn_socket, data=srv_answer)
 
     # Close the connection
     print("Client disconnected \n")
     # print('Server ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
 
-    conn.close()
+    conn_socket.close()
+
+def server_network_setup():
+    """
+    Sets up server's socket and binds it to localhost on port 4470.
+    Waits for a connection from the client. Returns the connection
+    socket when a connection has been established.
+    :return: socket representing the server-client connection
+    """
+    serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serv.bind(('localhost', 4470))
+    serv.listen(1)
+
+    # accept connection from client
+    connectionsocket, _ = serv.accept()
+
+    return connectionsocket
 
 def server_FHE_setup(received_data):
     """
