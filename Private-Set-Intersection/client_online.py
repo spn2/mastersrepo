@@ -114,12 +114,12 @@ def client_FHE_setup(polynomial_modulus, coefficient_modulus):
 
     return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
 
-def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base, minibin_cap):
+def create_and_seralize_batched_query(pyfhelobj, windowed_items, log_b_ell, base, minibin_cap):
     """
     Given a list of windowed items, returns a serialized and batched query to be sent to the server.
-    Using the provided Pyfhel object, pyfhelctx, the query is of course encrypted.
+    Using the provided Pyfhel object, pyfhelobj, the query is of course encrypted.
     
-    :param pyfhelctx: the Pyfhel object
+    :param pyfhelobj: the Pyfhel object
     :param windowed_items: client's windowed items
     :return: batched query
     """
@@ -133,7 +133,7 @@ def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base
             if ((j + 1) * base ** i - 1 < minibin_cap):
                 for k in range(len(windowed_items)):
                     plain_query[k] = windowed_items[k][j][i]
-                enc_query[j][i] = pyfhelctx.encrypt(plain_query)
+                enc_query[j][i] = pyfhelobj.encrypt(plain_query)
     
     enc_query_serialized = [[None for j in range(log_b_ell)] for i in range(1, base)]
 
@@ -144,11 +144,11 @@ def create_and_seralize_batched_query(pyfhelctx, windowed_items, log_b_ell, base
 
     return enc_query_serialized
 
-def decrypt_ciphertexts(pyfhelctx, ciphertexts, scheme="bfv"):
+def decrypt_ciphertexts(pyfhelobj, ciphertexts, scheme="bfv"):
     """
     Decrypts a lits of ciphertexts, returns a list of plaintexts.
 
-    :param pyfhelctx: the Pyfhel object
+    :param pyfhelobj: the Pyfhel object
     :param ciphertexts: list of ciphertexts
     :param scheme: the FHE scheme, default to BFV (Brakerski-Fan-Vercauteren)
     :return: list of plaintexts
@@ -156,7 +156,7 @@ def decrypt_ciphertexts(pyfhelctx, ciphertexts, scheme="bfv"):
 
     decryptions = []
     for ct in ciphertexts:
-        decryptions.append(PyCtxt(bytestring=ct, pyfhel=pyfhelctx, scheme=scheme).decrypt())
+        decryptions.append(PyCtxt(bytestring=ct, pyfhel=pyfhelobj, scheme=scheme).decrypt())
     return decryptions
 
 def find_client_intersection(decryptions, windowed_items, PRFed_client_set,):
