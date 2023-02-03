@@ -4,6 +4,7 @@ from time import time
 
 import numpy as np
 from Pyfhel import Pyfhel, PyCtxt
+from rich.console import Console
 
 from auxiliary_functions import get_and_deserialize_data, power_reconstruct, serialize_and_send_data
 from constants import *
@@ -13,38 +14,51 @@ from oprf_constants import OPRF_SERVER_KEY
 
 def main():
 
-    # socket setup; wait for client connection here
-    conn_socket = server_network_setup()
+    # for prettier printing
+    console = Console()
 
-    # server receives elliptic curve embedded curve points from the client
-    encoded_client_set, length_of_data_received_1 = get_and_deserialize_data(conn_socket)
+    with console.status("[bold green]Server online in progress...") as status:
 
-    # server multiplies the client's curve points with server's OPRF key
-    PRFed_encoded_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
+        # socket setup; wait for client connection here
+        conn_socket = server_network_setup()
+        console.log("[yellow]Client connection accepted.[/yellow]")
 
-    # send the result (PRFed_encoded_client_set) to the client
-    length_of_data_sent_1 = serialize_and_send_data(conn_socket, PRFed_encoded_client_set)
- 
-    # We wait for client to send us their FHE context and ciphertext, and also their query
-    received_data, length_of_data_received_2 = get_and_deserialize_data(conn_socket)
+        # server receives elliptic curve embedded curve points from the client
+        encoded_client_set, client_embedded_set_size = get_and_deserialize_data(conn_socket)
+        console.log("[yellow]Received client's elliptic curve embedded items.[/yellow]")
 
-    # reconstruct the pyfhel object (pyfhelobj) and the (serialized) client query
-    pyfhelobj, serialized_query = server_FHE_setup(received_data)
+        # server multiplies the client's curve points with server's OPRF key
+        PRFed_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
+        console.log("[yellow]Finished multiplying client's items with server's OPRF key.[/yellow]")
 
-    # deserialize the client's query
-    encrypted_query = reconstruct_encrypted_query(pyfhelobj, serialized_query)
+        # send the result (PRFed_client_set) to the client
+        PRFed_client_set_size = serialize_and_send_data(conn_socket, PRFed_client_set)
+        console.log("[yellow]Client's EC-embedded items * server's OPRF key sent to client.[/yellow]")
+    
+        # We wait for client to send us their FHE context and ciphertext, and also their query
+        received_data, fhe_context_and_query_size = get_and_deserialize_data(conn_socket)
 
-    # recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity})
-    all_powers = recover_encrypted_powers(encrypted_query)
+        # reconstruct the pyfhel object (pyfhelobj) and the (serialized) client query
+        pyfhelobj, serialized_query = server_FHE_setup(received_data)
+        console.log("[yellow]Received client's query and Fully Homomorphic Encryption context.[/yellow]")
 
-    # prepare server's answer to client query; the evaluated polynomials in encrypted form
-    srv_answer = prepare_server_response(all_powers, "server_preprocessed")
+        # deserialize the client's query
+        encrypted_query = reconstruct_encrypted_query(pyfhelobj, serialized_query)
+        console.log("[yellow]Finished deserializing client's query..[/yellow]")
 
-    # send the answer
-    length_of_data_sent_2 = serialize_and_send_data(conn_socket, data=srv_answer)
+        # recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity})
+        all_powers = recover_encrypted_powers(encrypted_query)
+        console.log("[yellow]Finished redovering client's encrypted powers.[/yellow]")
 
-    # close the connection socket
-    conn_socket.close()
+        # prepare server's answer to client query; the evaluated polynomials in encrypted form
+        srv_answer = prepare_server_response(all_powers, "server_preprocessed")
+
+        # send the answer
+        server_answer_size = serialize_and_send_data(conn_socket, data=srv_answer)
+        console.log("[yellow]Server's answer prepared and sent to client.[/yellow]")
+
+        # close the connection socket
+        conn_socket.close()
 
 def server_network_setup():
     """
