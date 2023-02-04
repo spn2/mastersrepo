@@ -36,12 +36,14 @@ def main():
         # send the result (PRFed_client_set) to the client
         PRFed_client_set_size = serialize_and_send_data(conn_socket, PRFed_client_set)
         console.log("[yellow]Client's EC-embedded items * server's OPRF key sent to client.[/yellow]")
+        print("Sent to client: {:.2f} MB".format(PRFed_client_set_size/ (2 ** 20)))
     
         # We wait for client to send us their FHE context and ciphertext, and also their query
         received_data, fhe_context_and_query_size = get_and_deserialize_data(conn_socket)
 
         # reconstruct the pyfhel object (pyfhelobj) and the (serialized) client query
         pyfhelobj, serialized_query = server_FHE_setup(received_data)
+        print(pyfhelobj)
         console.log("[yellow]Received client's query and Fully Homomorphic Encryption context.[/yellow]")
 
         # deserialize the client's query
@@ -58,6 +60,7 @@ def main():
         # send the answer
         server_answer_size = serialize_and_send_data(conn_socket, data=srv_answer)
         console.log("[yellow]Server's answer prepared and sent to client.[/yellow]")
+        print("Sent to client: {:.2f} MB".format(server_answer_size/ (2 ** 20)))
 
         t3 = time()
 

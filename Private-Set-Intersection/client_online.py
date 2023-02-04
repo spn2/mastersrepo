@@ -35,6 +35,8 @@ def main():
         client_to_server_communiation_oprf = serialize_and_send_data(client, filename="client_preprocessed")
         console.log("[yellow]Elliptic curve embedded items sent to server.[/yellow]")
 
+        print("Sent to server: {:.2f} MB".format(client_to_server_communiation_oprf/ (2 ** 20)))
+
         # get the PRFed version of our set back from server
         PRFed_encoded_client_set, server_to_client_communication_oprf = get_and_deserialize_data(client)
         console.log("[yellow]PRFed items received from server.[/yellow]")
@@ -68,6 +70,12 @@ def main():
         # send query to server
         client_to_server_communiation_query = serialize_and_send_data(client, data=message_to_be_sent)
         console.log("[yellow]Query sent to server, waiting for answer.[/yellow]")
+        print(len(s_context)/ (2 ** 20))
+        print(len(s_public_key)/ (2 ** 20))
+        print(len(s_relin_key)/ (2 ** 20))
+        print(len(s_rotate_key)/ (2 ** 20))
+        print(len(enc_query_serialized)/(2**20))
+        print("Sent to server: {:.2f} MB".format(client_to_server_communiation_query/ (2 ** 20)))
 
         # get the ciphertexts from server
         ciphertexts, server_to_client_query_response = get_and_deserialize_data(client)
