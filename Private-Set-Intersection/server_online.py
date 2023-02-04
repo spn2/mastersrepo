@@ -54,8 +54,10 @@ def main():
         all_powers = recover_encrypted_powers(encrypted_query)
         console.log("[yellow]Finished redovering client's encrypted powers.[/yellow]")
 
+        print("CRITICAL SECTION START")
         # prepare server's answer to client query; the evaluated polynomials in encrypted form
-        srv_answer = prepare_server_response(all_powers, "server_preprocessed")
+        srv_answer = prepare_server_response(pyfhelobj, all_powers, "server_preprocessed")
+        print("CRITICAL SECTION END")
 
         # send the answer
         server_answer_size = serialize_and_send_data(conn_socket, data=srv_answer)
@@ -150,29 +152,40 @@ def recover_encrypted_powers(encrypted_query):
 
     return all_powers
 
-def prepare_server_response(all_powers, server_preprocessed_filename):
+def prepare_server_response(pyfhelobj, all_powers, server_preprocessed_filename):
     """
     Computes the polynomials (while in encrypted form; FHE magic happens here)
     and returns the resulting ciphertexts.
 
+    :param pyfhelobj: the Pyfhel object, needed for relinearization after multiplications
     :param all_powers: client's encrypted powers
     :param server_preprocessed_filename: filename where server's prepocessed items are
                                          (see server_offline.py)
     :return: evaluated polynomials in encrypted form
     """
+
+    # get server's preprocessed items
     g = open(server_preprocessed_filename, 'rb')
     poly_coeffs = pickle.load(g)
 
-    # For the online phase of the server, we need to use the columns of the preprocessed database
+    # the columns are used
     transposed_poly_coeffs = np.transpose(poly_coeffs).tolist()
 
     # Server sends alpha ciphertexts, obtained from performing dot_product between the polynomial coefficients from the preprocessed server database and all the powers Enc(y), ..., Enc(y^{minibin_capacity})
     evaluated_polynomials = []
     for i in range(ALPHA):
-        # the rows with index multiple of (B/alpha+1) have only 1's
+        # the rows with index multiple of (B/alpha+1) have only 1s
+
         dot_product = all_powers[0]
         for j in range(1, MINIBIN_CAP):
             dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + j] * all_powers[j]
+            
+            # ValueError: not enough relinearization keys
+            # ~dot_product
+            
+            # ValueError: not enough relinearization keys
+            # pyfhelobj.relinearize(dot_product)
+
         dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + MINIBIN_CAP]
         evaluated_polynomials.append(dot_product.to_bytes())
 
