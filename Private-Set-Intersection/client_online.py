@@ -21,6 +21,8 @@ def main():
 
     with console.status("[bold green]Client online in progress...") as status:
 
+        t0 = time()
+
         # connect to server
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(('localhost', 4470))
@@ -37,7 +39,6 @@ def main():
         PRFed_encoded_client_set, server_to_client_communication_oprf = get_and_deserialize_data(client)
         console.log("[yellow]PRFed items received from server.[/yellow]")
 
-        t0 = time()
 
         # We finalize the OPRF processing by applying the inverse of the secret key, oprf_client_key
         key_inverse = pow(OPRF_CLIENT_KEY, -1, GENERATOR_ORDER)
@@ -85,6 +86,7 @@ def main():
         t3 = time()
         console.log("\n[blue]Intersection recovered correctly: {}[/blue]".format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
         console.log("[blue]Client ONLINE computation time {:.2f}s[/blue]".format(t1 - t0 + t3 - t2))
+        console.log("[blue]Total time {:.2f}s[/blue]".format(t3 - t0))
         console.log("[blue]Communication size:[/blue]")
         console.log("[blue]~ Client --> Server:  {:.2f} MB[/blue]".format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
         console.log("[blue]~ Server --> Client:  {:.2f} MB[/blue]".format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))

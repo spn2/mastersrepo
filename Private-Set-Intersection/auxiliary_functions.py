@@ -177,7 +177,7 @@ def get_and_deserialize_data(socketobj):
     serialized_data = b""
 
     while len(serialized_data) < expected_data_length:
-        data = socketobj.recv(4096)
+        data = socketobj.recv(65536)
         if not data: break
         serialized_data += data
 

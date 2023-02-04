@@ -19,6 +19,8 @@ def main():
 
     with console.status("[bold green]Server online in progress...") as status:
 
+        t0 = time()
+
         # socket setup; wait for client connection here
         conn_socket = server_network_setup()
         console.log("[yellow]Client connection accepted.[/yellow]")
@@ -56,6 +58,10 @@ def main():
         # send the answer
         server_answer_size = serialize_and_send_data(conn_socket, data=srv_answer)
         console.log("[yellow]Server's answer prepared and sent to client.[/yellow]")
+
+        t3 = time()
+
+        console.log("[blue]Server finished, total time: {:.2f}s[/blue]".format(t3 - t0))
 
         # close the connection socket
         conn_socket.close()
