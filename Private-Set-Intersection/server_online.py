@@ -104,9 +104,10 @@ def server_FHE_setup(received_data):
     pyfhelobj.from_bytes_context(received_data[0])
     pyfhelobj.from_bytes_public_key(received_data[1])
     pyfhelobj.from_bytes_relin_key(received_data[2])
-    pyfhelobj.from_bytes_rotate_key(received_data[3])
+    # pyfhelobj.from_bytes_rotate_key(received_data[3])
 
-    serialized_query = received_data[4]
+    # serialized_query = received_data[4]
+    serialized_query = received_data[3]
 
     return pyfhelobj, serialized_query
 

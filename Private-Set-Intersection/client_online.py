@@ -28,7 +28,8 @@ def main():
         client.connect(('localhost', 4470))
 
         # FHE setup
-        HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
+        # HEctx, s_context, s_public_key, s_relin_key, s_rotate_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
+        HEctx, s_context, s_public_key, s_relin_key = client_FHE_setup(POLY_MOD, PLAIN_MOD)
         console.log("[yellow]FHE setup finished.[/yellow]")
 
         # send our EC embedded items to server
@@ -66,15 +67,16 @@ def main():
         t1 = time()
         
         # set up and serialize the query to be sent to the server
-        message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
+        # message_to_be_sent = [s_context, s_public_key, s_relin_key, s_rotate_key, enc_query_serialized]
+        message_to_be_sent = [s_context, s_public_key, s_relin_key, enc_query_serialized]
         # send query to server
         client_to_server_communiation_query = serialize_and_send_data(client, data=message_to_be_sent)
         console.log("[yellow]Query sent to server, waiting for answer.[/yellow]")
-        print(len(s_context)/ (2 ** 20))
-        print(len(s_public_key)/ (2 ** 20))
-        print(len(s_relin_key)/ (2 ** 20))
-        print(len(s_rotate_key)/ (2 ** 20))
-        print(len(enc_query_serialized)/(2**20))
+        # print(len(s_context)/ (2 ** 20))
+        # print(len(s_public_key)/ (2 ** 20))
+        # print(len(s_relin_key)/ (2 ** 20))
+        # print(len(s_rotate_key)/ (2 ** 20))
+        # print(len(enc_query_serialized)/(2**20))
         print("Sent to server: {:.2f} MB".format(client_to_server_communiation_query/ (2 ** 20)))
 
         # get the ciphertexts from server
@@ -115,14 +117,15 @@ def client_FHE_setup(polynomial_modulus, coefficient_modulus):
     HEctx.contextGen(scheme="bfv", n=polynomial_modulus, t=coefficient_modulus)
     HEctx.keyGen()
     HEctx.relinKeyGen()
-    HEctx.rotateKeyGen()
+    # HEctx.rotateKeyGen()
 
     s_context    = HEctx.to_bytes_context()
     s_public_key = HEctx.to_bytes_public_key()
     s_relin_key  = HEctx.to_bytes_relin_key()
-    s_rotate_key = HEctx.to_bytes_rotate_key()
+    # s_rotate_key = HEctx.to_bytes_rotate_key()
 
-    return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
+    # return (HEctx, s_context, s_public_key, s_relin_key, s_rotate_key)
+    return (HEctx, s_context, s_public_key, s_relin_key)
 
 def create_and_seralize_batched_query(pyfhelobj, windowed_items, log_b_ell, base, minibin_cap):
     """
