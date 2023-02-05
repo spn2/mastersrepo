@@ -36,8 +36,6 @@ def main():
         client_to_server_communiation_oprf = serialize_and_send_data(client, filename="client_preprocessed")
         console.log("[yellow]Elliptic curve embedded items sent to server.[/yellow]")
 
-        print("Sent to server: {:.2f} MB".format(client_to_server_communiation_oprf/ (2 ** 20)))
-
         # get the PRFed version of our set back from server
         PRFed_encoded_client_set, server_to_client_communication_oprf = get_and_deserialize_data(client)
         console.log("[yellow]PRFed items received from server.[/yellow]")
@@ -72,12 +70,6 @@ def main():
         # send query to server
         client_to_server_communiation_query = serialize_and_send_data(client, data=message_to_be_sent)
         console.log("[yellow]Query sent to server, waiting for answer.[/yellow]")
-        # print(len(s_context)/ (2 ** 20))
-        # print(len(s_public_key)/ (2 ** 20))
-        # print(len(s_relin_key)/ (2 ** 20))
-        # print(len(s_rotate_key)/ (2 ** 20))
-        # print(len(enc_query_serialized)/(2**20))
-        print("Sent to server: {:.2f} MB".format(client_to_server_communiation_query/ (2 ** 20)))
 
         # get the ciphertexts from server
         ciphertexts, server_to_client_query_response = get_and_deserialize_data(client)
@@ -94,15 +86,17 @@ def main():
         console.log("[yellow]Client and server intersection found.[/yellow]")
 
         t3 = time()
-        console.log("\n[blue]Intersection recovered correctly: {}[/blue]".format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
-        console.log("[blue]Client ONLINE computation time {:.2f}s[/blue]".format(t1 - t0 + t3 - t2))
-        console.log("[blue]Total time {:.2f}s[/blue]".format(t3 - t0))
-        console.log("[blue]Communication size:[/blue]")
-        console.log("[blue]~ Client --> Server:  {:.2f} MB[/blue]".format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
-        console.log("[blue]~ Server --> Client:  {:.2f} MB[/blue]".format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
 
         # disconnect from server
         client.close()
+
+        console.log("\n[blue]Intersection recovered correctly: {}[/blue]".format(check_if_recovered_real_intersection(PSI_intersection, "intersection")))
+        console.log("[blue]Client time spent on computations: {:.2f}s[/blue]".format(t1-t0+t3-t2))
+        console.log("[blue]Client program total time: {:.2f}s[/blue]".format(t3 - t0))
+        console.log("[blue]Communication sizes:[/blue]")
+        console.log("[blue]\tClient --> Server:\t{:.2f} MB[/blue]".format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
+        console.log("[blue]\tServer --> Client:\t{:.2f} MB[/blue]".format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
+
 
 def client_FHE_setup(polynomial_modulus, coefficient_modulus):
     """

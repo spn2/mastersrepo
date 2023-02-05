@@ -29,21 +29,21 @@ def main():
         encoded_client_set, client_embedded_set_size = get_and_deserialize_data(conn_socket)
         console.log("[yellow]Received client's elliptic curve embedded items.[/yellow]")
 
+        t1 = time()
         # server multiplies the client's curve points with server's OPRF key
         PRFed_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
         console.log("[yellow]Finished multiplying client's items with server's OPRF key.[/yellow]")
 
+        t2 = time()
         # send the result (PRFed_client_set) to the client
         PRFed_client_set_size = serialize_and_send_data(conn_socket, PRFed_client_set)
         console.log("[yellow]Client's EC-embedded items * server's OPRF key sent to client.[/yellow]")
-        print("Sent to client: {:.2f} MB".format(PRFed_client_set_size/ (2 ** 20)))
     
         # We wait for client to send us their FHE context and ciphertext, and also their query
         received_data, fhe_context_and_query_size = get_and_deserialize_data(conn_socket)
 
         # reconstruct the pyfhel object (pyfhelobj) and the (serialized) client query
         pyfhelobj, serialized_query = server_FHE_setup(received_data)
-        print(pyfhelobj)
         console.log("[yellow]Received client's query and Fully Homomorphic Encryption context.[/yellow]")
 
         # deserialize the client's query
@@ -52,24 +52,28 @@ def main():
 
         # recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity})
         all_powers = recover_encrypted_powers(encrypted_query)
-        console.log("[yellow]Finished redovering client's encrypted powers.[/yellow]")
+        console.log("[yellow]Finished recovering client's encrypted powers.[/yellow]")
 
-        print("CRITICAL SECTION START")
+        t3 = time()
         # prepare server's answer to client query; the evaluated polynomials in encrypted form
         srv_answer = prepare_server_response(pyfhelobj, all_powers, "server_preprocessed")
-        print("CRITICAL SECTION END")
 
+        t4 = time()
         # send the answer
         server_answer_size = serialize_and_send_data(conn_socket, data=srv_answer)
         console.log("[yellow]Server's answer prepared and sent to client.[/yellow]")
-        print("Sent to client: {:.2f} MB".format(server_answer_size/ (2 ** 20)))
 
-        t3 = time()
-
-        console.log("[blue]Server finished, total time: {:.2f}s[/blue]".format(t3 - t0))
+        t5 = time()
 
         # close the connection socket
         conn_socket.close()
+
+        console.log("\n[blue]Server time spent on computations: {:.2f}s[/blue]".format(t2-t1+t4-t3))
+        console.log("[blue]Server program total time:  {:.2f}s[/blue]".format(t5 - t0))
+        console.log("[blue]Communication sizes:[/blue]")
+        console.log("[blue]\tServer --> Client:\t{:.2f} MB[/blue]".format((PRFed_client_set_size + server_answer_size )/ 2 ** 20))
+        console.log("[blue]\tClient --> Server:\t{:.2f} MB[/blue]".format((client_embedded_set_size + fhe_context_and_query_size )/ 2 ** 20))
+
 
 def server_network_setup():
     """
