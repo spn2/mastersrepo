@@ -1,9 +1,6 @@
-from math import log2
-from multiprocessing import Pool
 import pickle
 
 from constants import *
-from oprf_constants import NUM_OF_PROCESSES
 
 def split_int_into_base_digits(n, b):
     '''
@@ -46,26 +43,24 @@ def fast_multiply_items(arr):
     return fast_multiply_items(halfarr)
 
 
-####################
-def power_reconstruct(window, exponent):
+def power_reconstruct(matrix, exponent):
     '''
-    :param: window: a matrix of integers as powers of y; in the protocol is the matrix
-                    with entries window[i][j] = [y ** i * base ** j]
-    :param: exponent: an integer, will be an exponent <= logB_ell
+    Reconstruct an exponent of y (exponent) given a matrix of precomputed powers of y (matrix).
+
+    :param: matrix:  powers of y with the form matrix[i][j] = [y ** i * base ** j]
+    :param: exponent: an integer <= LOG_B_ELL
     :return: y ** exponent
     '''
 
-    e_base_coef = split_int_into_base_digits(exponent, BASE)
-    necessary_powers = [] #len(necessary_powers) <= 2 ** HE.depth 
-    j = 0
-    for x in e_base_coef:
-        if x >= 1:
-            necessary_powers.append(window[x - 1][j])
-        j = j + 1
+    # compute the exponent's digits in BASE
+    exponent_digits = split_int_into_base_digits(exponent, BASE)
 
-    return fast_multiply_items(necessary_powers)
+    # select needed powers from window to compute y ** exponent.
+    needed_powers = [matrix[x-1][j] for j, x in enumerate(exponent_digits) if x >= 1]
 
+    return fast_multiply_items(needed_powers)
 
+####################
 def windowing(y, bound, mod):
     '''
     :param: y: an integer
