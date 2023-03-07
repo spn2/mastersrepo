@@ -26,10 +26,10 @@ def split_int_into_base_digits(n, b):
 
 def fast_multiply_items(arr):
     '''
-    Karatsuba's algorithm for faster multiplication. Assumes the items in
+    Divide and conquer for faster multiplication. Assumes the items in
     arr are multiplicable. (len(powers_vec) <= 2 ** HE.depth)
 
-    :param: vector: a vector of multiplicable objects 
+    :param: arr: a list of multiplicable objects 
     :return: the result of multiplying all the objects in arr
     '''
 
@@ -39,11 +39,12 @@ def fast_multiply_items(arr):
     if len(arr) == 2:
         return(arr[0] * arr[1])
 
-    vec = [arr[i] * arr[i+1] for i in range(0, len(arr)-1, 2)]
-    if len(arr) % 2 == 1:
-        vec.append(arr[-1])
+    halfarr = [arr[i] * arr[i+1] for i in range(0, len(arr)-1, 2)]
 
-    return fast_multiply_items(vec)
+    if len(arr) % 2 == 1: # in case of odd # of items
+        halfarr.append(arr[-1])
+
+    return fast_multiply_items(halfarr)
 
 
 def power_reconstruct(window, exponent):
@@ -53,7 +54,7 @@ def power_reconstruct(window, exponent):
     :param: exponent: an integer, will be an exponent <= logB_ell
     :return: y ** exponent
     '''
-    
+
     e_base_coef = split_int_into_base_digits(exponent, BASE)
     necessary_powers = [] #len(necessary_powers) <= 2 ** HE.depth 
     j = 0
