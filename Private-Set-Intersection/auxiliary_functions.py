@@ -1,6 +1,5 @@
 from math import log2
 from multiprocessing import Pool
-import numpy as np
 import pickle
 
 from constants import *
@@ -47,6 +46,7 @@ def fast_multiply_items(arr):
     return fast_multiply_items(halfarr)
 
 
+####################
 def power_reconstruct(window, exponent):
     '''
     :param: window: a matrix of integers as powers of y; in the protocol is the matrix
@@ -82,7 +82,7 @@ def windowing(y, bound, mod):
                 windowed_y[i][j] = pow(y, (i+1) * BASE ** j, mod)
 
     return windowed_y
-
+####################
 
 def compute_coefficients_from_roots(roots, mod):
     '''
@@ -94,12 +94,21 @@ def compute_coefficients_from_roots(roots, mod):
     :return: integer coefficients of a polynomial whose roots are roots modulo mod
     '''
 
-    coefficients = np.array(1, dtype=np.int64)
-    for r in roots:
-        coefficients = np.convolve(coefficients, [1, -r]) % mod
+    coefficients = [1]
 
-    return coefficients.tolist()
-# 
+    for r in roots:
+        # pre-allocate a new coefficients list
+        new_coeffs = [0] * (len(coefficients) + 1)
+        for i, c in enumerate(coefficients):
+            # compute convolution
+            new_coeffs[i] += c
+            new_coeffs[i+1] -= r * c
+        # take coefficients modulo mod
+        for i in range(len(new_coeffs)):
+            new_coeffs[i] %= mod
+        coefficients = new_coeffs
+
+    return coefficients
 
 
 def read_file_return_list(filename):
