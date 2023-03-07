@@ -17,35 +17,34 @@ def split_int_into_base_digits(n, b):
              at the end of the list
     '''
 
-    coeff = []
+    digits = []
     while n > 0:
-        coeff.append(n % b)
+        digits.append(n % b)
         n //= b
-    return coeff
 
-# We need len(powers_vec) <= 2 ** HE.depth
-def low_depth_multiplication(vector):
+    return digits
+
+def fast_multiply_items(arr):
     '''
-    :param: vector: a vector of integers 
-    :return: an integer representing the multiplication of all the integers from vector
+    Karatsuba's algorithm for faster multiplication. Assumes the items in
+    arr are multiplicable. (len(powers_vec) <= 2 ** HE.depth)
+
+    :param: vector: a vector of multiplicable objects 
+    :return: the result of multiplying all the objects in arr
     '''
-    L = len(vector)
-    if L == 1:
-        return vector[0]
-    if L == 2:
-        return(vector[0] * vector[1])
-    else:    
-        if (L % 2 == 1):
-            vec = []
-            for i in range(int(L / 2)):
-                vec.append(vector[2 * i] * vector[2 * i + 1])
-            vec.append(vector[L-1])
-            return low_depth_multiplication(vec)
-        else:
-            vec = []
-            for i in range(int(L / 2)):
-                vec.append(vector[2 * i] * vector[2 * i + 1])
-            return low_depth_multiplication(vec)
+
+    if len(arr) == 1:
+        return arr[0]
+
+    if len(arr) == 2:
+        return(arr[0] * arr[1])
+
+    vec = [arr[i] * arr[i+1] for i in range(0, len(arr)-1, 2)]
+    if len(arr) % 2 == 1:
+        vec.append(arr[-1])
+
+    return fast_multiply_items(vec)
+
 
 def power_reconstruct(window, exponent):
     '''
@@ -54,6 +53,7 @@ def power_reconstruct(window, exponent):
     :param: exponent: an integer, will be an exponent <= logB_ell
     :return: y ** exponent
     '''
+    
     e_base_coef = split_int_into_base_digits(exponent, BASE)
     necessary_powers = [] #len(necessary_powers) <= 2 ** HE.depth 
     j = 0
@@ -61,7 +61,8 @@ def power_reconstruct(window, exponent):
         if x >= 1:
             necessary_powers.append(window[x - 1][j])
         j = j + 1
-    return low_depth_multiplication(necessary_powers)
+
+    return fast_multiply_items(necessary_powers)
 
 
 def windowing(y, bound, mod):
@@ -72,11 +73,13 @@ def windowing(y, bound, mod):
     :return: a matrix associated to y, where we put y ** (i+1)*base ** j modulus mod
              in the (i,j) entry, as long as the exponent of y is smaller than some bound
     '''
+
     windowed_y = [[None for j in range(LOG_B_ELL)] for i in range(BASE-1)]
     for j in range(LOG_B_ELL):
         for i in range(BASE-1):
             if ((i+1) * BASE ** j - 1 < bound):
                 windowed_y[i][j] = pow(y, (i+1) * BASE ** j, mod)
+
     return windowed_y
 
 
@@ -89,9 +92,11 @@ def compute_coefficients_from_roots(roots, mod):
     :param mod: an integer
     :return: integer coefficients of a polynomial whose roots are roots modulo mod
     '''
+
     coefficients = np.array(1, dtype=np.int64)
     for r in roots:
         coefficients = np.convolve(coefficients, [1, -r]) % mod
+
     return coefficients.tolist()
 # 
 
@@ -101,6 +106,7 @@ def read_file_return_list(filename):
     :param filename: filename to process
     :return: list of lines from file with newlines stripped off and everything converted to int
     """
+
     with open(filename) as f:
         return [int(line.rstrip()) for line in f]
 
@@ -131,9 +137,12 @@ def unpack_list_of_lists(lists):
     :param lists: list of lists to unpack
     :return: single list containing all the elements from the lists in lists
     """
+
     unpacked = []
+
     for l in lists:
         unpacked += l
+
     return unpacked
 
 
@@ -148,6 +157,7 @@ def serialize_and_send_data(socketobj, data=None, filename=""):
     :param filename: name of file where data is found (used if data is None)
     :return: length of data sent
     """
+
     # if no data was provided, try to open the filename where data should be
     if data is None:
         try:
@@ -202,6 +212,7 @@ def send_outgoing_data_length(socketobj, data):
     :param data: data that party wants to send (client only sends size here)
     :return: the length of the data the party will send
     """
+
     # prepare size, pad with spaces to reach 10 bytes, send data, return the length
     msg_length = len(data)
     padded_msg_length = str(msg_length) + ' ' * (10 - len(str(msg_length)))
@@ -217,4 +228,5 @@ def get_incoming_data_length(clientsocket):
     :param clientsocket: socket object with a connection to the other party
     :return: the length of the data that the other party will send
     """
+
     return int(clientsocket.recv(10).decode().strip())
