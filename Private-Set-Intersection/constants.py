@@ -18,6 +18,7 @@ OUTPUT_BITS = 13
 NUM_OF_BINS = 2 ** OUTPUT_BITS
 
 # encryption parameters of the BFV scheme: the plain modulus and the polynomial modulus degree
+# the polynomial modulus refers to n in the polynomial p(x)=x^n+1
 PLAIN_MOD = 536903681
 POLY_MOD = 2 ** 13
 

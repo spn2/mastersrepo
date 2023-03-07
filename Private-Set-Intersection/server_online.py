@@ -1,6 +1,6 @@
 import pickle
 import socket
-from time import time
+from time import time, sleep
 
 import numpy as np
 from Pyfhel import Pyfhel, PyCtxt
@@ -20,6 +20,7 @@ def main():
     with console.status("[bold green]Server online in progress...") as status:
 
         t0 = time()
+        console.log("[yellow]Waiting for client.[/yellow]")
 
         # socket setup; wait for client connection here
         conn_socket = server_network_setup()
@@ -48,7 +49,7 @@ def main():
 
         # deserialize the client's query
         encrypted_query = reconstruct_encrypted_query(pyfhelobj, serialized_query)
-        console.log("[yellow]Finished deserializing client's query..[/yellow]")
+        console.log("[yellow]Finished deserializing client's query.[/yellow]")
 
         # recover all the encrypted powers Enc(y), Enc(y^2), Enc(y^3) ..., Enc(y^{minibin_capacity})
         all_powers = recover_encrypted_powers(encrypted_query)
@@ -185,11 +186,12 @@ def prepare_server_response(pyfhelobj, all_powers, server_preprocessed_filename)
         for j in range(1, MINIBIN_CAP):
             dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + j] * all_powers[j]
             
-            # ValueError: not enough relinearization keys
+            # # ValueError: not enough relinearization keys
             # ~dot_product
             
-            # ValueError: not enough relinearization keys
-            # pyfhelobj.relinearize(dot_product)
+            # # ValueError: not enough relinearization keys
+            # # pyfhelobj.relinearize(dot_product)
+
 
         dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + MINIBIN_CAP]
         evaluated_polynomials.append(dot_product.to_bytes())

@@ -6,17 +6,22 @@ import pickle
 from constants import *
 from oprf_constants import NUM_OF_PROCESSES
 
-def int2base(n, b):
+def split_int_into_base_digits(n, b):
     '''
+    Converts an integer n to a list representing its digits in another base b.
+    For example, convert_integer_to_digits(10, 2) returns [0,1,0,1]
+
     :param n: an integer
     :param b: a base
-    :return: an array of coefficients from the base decomposition of an
-             integer n with coeff[i] being the coeff of b ** i
+    :return: a list representing n's digits in base b, with the highest power
+             at the end of the list
     '''
-    if n < b:
-        return [n]
-    else:
-        return [n % b] + int2base(n // b, b)  
+
+    coeff = []
+    while n > 0:
+        coeff.append(n % b)
+        n //= b
+    return coeff
 
 # We need len(powers_vec) <= 2 ** HE.depth
 def low_depth_multiplication(vector):
@@ -49,7 +54,7 @@ def power_reconstruct(window, exponent):
     :param: exponent: an integer, will be an exponent <= logB_ell
     :return: y ** exponent
     '''
-    e_base_coef = int2base(exponent, BASE)
+    e_base_coef = split_int_into_base_digits(exponent, BASE)
     necessary_powers = [] #len(necessary_powers) <= 2 ** HE.depth 
     j = 0
     for x in e_base_coef:
