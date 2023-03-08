@@ -19,7 +19,7 @@ def main():
         client_point_precomputed = (OPRF_CLIENT_KEY % GENERATOR_ORDER) * G
 
         # store client's set in memory 
-        client_set = read_file_return_list("client_set")
+        client_set = read_file_return_list_of_int("client_set")
 
         # Client's items are encoded on the elliptic curve, retrieve the x and y coords of each point (item)
         encoded_client_set = client_prf_offline((client_set, client_point_precomputed))

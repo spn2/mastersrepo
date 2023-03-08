@@ -6,7 +6,7 @@ import numpy as np
 from Pyfhel import Pyfhel, PyCtxt
 from rich.console import Console
 
-from auxiliary_functions import get_and_deserialize_data, power_reconstruct, serialize_and_send_data
+from auxiliary_functions import get_and_deserialize_data, reconstruct_power, serialize_and_send_data
 from constants import *
 from oprf import server_prf_online_parallel
 from oprf_constants import OPRF_SERVER_KEY
@@ -153,7 +153,7 @@ def recover_encrypted_powers(encrypted_query):
 
     for k in range(MINIBIN_CAP):
         if all_powers[k] == None:
-            all_powers[k] = power_reconstruct(encrypted_query, k + 1)
+            all_powers[k] = reconstruct_power(encrypted_query, k + 1)
     all_powers = all_powers[::-1]
 
     return all_powers

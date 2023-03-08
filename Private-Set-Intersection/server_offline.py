@@ -4,7 +4,7 @@ from time import time
 
 from rich.console import Console
 
-from auxiliary_functions import read_file_return_list
+from auxiliary_functions import read_file_return_list_of_int
 from constants import *
 from oprf import server_prf_offline_parallel
 from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
@@ -20,7 +20,7 @@ def main():
     with console.status("[bold red]Server offline in progress...") as status:
 
         # store server's set in memory 
-        server_set = read_file_return_list("server_set")
+        server_set = read_file_return_list_of_int("server_set")
 
         # key * generator of elliptic curve (EC)
         key_gen_point = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G

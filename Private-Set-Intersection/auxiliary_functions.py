@@ -1,8 +1,16 @@
 import pickle
+import socket
+from typing import Any, List, Optional, Tuple, TypeVar
 
 from constants import *
 
-def split_int_into_base_digits(n, b):
+Multiplicable = TypeVar("Multiplicable", bound="MultiplicableBase")
+
+class MultiplicableBase:
+    def __mul__(self, other: "Multiplicable") -> "Multiplicable":
+        pass
+
+def split_int_into_base_digits(n: int, b: int) -> List[int]:
     '''
     Converts an integer n to a list representing its digits in another base b.
     For example, convert_integer_to_digits(10, 2) returns [0,1,0,1]
@@ -20,7 +28,7 @@ def split_int_into_base_digits(n, b):
 
     return digits
 
-def fast_multiply_items(arr):
+def fast_multiply_items(arr: List[Multiplicable]) -> Multiplicable:
     '''
     Divide and conquer for faster multiplication. Assumes the items in
     arr are multiplicable. (len(powers_vec) <= 2 ** HE.depth)
@@ -43,7 +51,7 @@ def fast_multiply_items(arr):
     return fast_multiply_items(halfarr)
 
 
-def power_reconstruct(matrix, exponent):
+def reconstruct_power(matrix: List[List[int]], exponent: int) -> int:
     '''
     Reconstruct an exponent of y (exponent) given a matrix of precomputed powers of y (matrix).
 
@@ -61,7 +69,7 @@ def power_reconstruct(matrix, exponent):
     return fast_multiply_items(needed_powers)
 
 
-def windowing(y, bound, mod):
+def windowing(y: int, bound: int, mod: int) -> List[List[Optional[int]]]:
     """
     Windowing technique to efficiently compute modular exponentiation of an integer y.
     Returns a matrix of y raised to powers of BASE with exponents up to a specified bound (modulo mod).
@@ -86,7 +94,7 @@ def windowing(y, bound, mod):
     return windowed_y
 
 
-def compute_coefficients_from_roots(roots, mod):
+def compute_coefficients_from_roots(roots: List[int], mod: int) -> List[int]:
     '''
     Takes a set of roots and computes the coefficients (modulo mod) of the
     polynomial that vanishes at each root in roots.
@@ -113,7 +121,7 @@ def compute_coefficients_from_roots(roots, mod):
     return coefficients
 
 
-def read_file_return_list(filename):
+def read_file_return_list_of_int(filename: str) -> List[int]:
     """
     :param filename: filename to process
     :return: list of lines from file with newlines stripped off and everything converted to int
@@ -122,7 +130,7 @@ def read_file_return_list(filename):
     with open(filename) as f:
         return [int(line.rstrip()) for line in f]
 
-def split_list_into_parts(items, n):
+def split_list_into_parts(items: List[Any], n: int) -> List[List[Any]]:
     """
     Example: split_list_into_parts([0,1,2,3,4,5,6,7,8,9], 3) is split into [0,1,2], [3,4,5], [6,7,8], [9]
 
@@ -144,7 +152,7 @@ def split_list_into_parts(items, n):
 
     return split_lists
 
-def unpack_list_of_lists(lists):
+def unpack_list_of_lists(lists: List[List]) -> List:
     """
     :param lists: list of lists to unpack
     :return: single list containing all the elements from the lists in lists
@@ -160,7 +168,7 @@ def unpack_list_of_lists(lists):
 
 # functions for sending/receiving data for the online phase
 
-def serialize_and_send_data(socketobj, data=None, filename=""):
+def serialize_and_send_data(socketobj: socket.socket, data: object = None, filename: str = "") -> int:
     """
     Sends data to the other part of the socketobj.
 
@@ -188,7 +196,7 @@ def serialize_and_send_data(socketobj, data=None, filename=""):
     return length_of_sent_data
 
 
-def get_and_deserialize_data(socketobj):
+def get_and_deserialize_data(socketobj: socket.socket) -> Tuple[Any, int]:
     """
     Receives data from the other side of the socket connection.
     Deserializes the data before returning it.
@@ -213,7 +221,7 @@ def get_and_deserialize_data(socketobj):
 
     return deserialized_data, serialized_data_length
 
-def send_outgoing_data_length(socketobj, data):
+def send_outgoing_data_length(socketobj: socket.socket, data: bytes) -> int:
     """
     Sends the length of the outgoing data to the other side of the socketobj. 
     Used before the one party sends a larger amount of data. The data will be
@@ -232,7 +240,7 @@ def send_outgoing_data_length(socketobj, data):
 
     return msg_length
 
-def get_incoming_data_length(clientsocket):
+def get_incoming_data_length(clientsocket: socket.socket) -> int:
     """
     Receives the length of data to receive from the other side of socketobj.
     Used before the other party sends a larger amount of data.
