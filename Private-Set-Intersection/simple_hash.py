@@ -1,9 +1,8 @@
 import math
 import mmh3
-from random import randint
 
 from auxiliary_functions import compute_coefficients_from_roots
-from constants import ALPHA, BIN_CAP, MINIBIN_CAP, NUM_OF_BINS, NUM_OF_HASHES, OUTPUT_BITS, PLAIN_MOD, SIGMA_MAX
+from constants import BIN_CAP, NUM_OF_BINS, NUM_OF_HASHES, OUTPUT_BITS, SIGMA_MAX
 
 log_no_hashes = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
 POW_2_MASK = 2 ** OUTPUT_BITS - 1

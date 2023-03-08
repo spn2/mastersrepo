@@ -60,24 +60,31 @@ def power_reconstruct(matrix, exponent):
 
     return fast_multiply_items(needed_powers)
 
-####################
-def windowing(y, bound, mod):
-    '''
-    :param: y: an integer
-    :param bound: an integer
-    :param mod: a modulus integer
-    :return: a matrix associated to y, where we put y ** (i+1)*base ** j modulus mod
-             in the (i,j) entry, as long as the exponent of y is smaller than some bound
-    '''
 
-    windowed_y = [[None for j in range(LOG_B_ELL)] for i in range(BASE-1)]
-    for j in range(LOG_B_ELL):
-        for i in range(BASE-1):
-            if ((i+1) * BASE ** j - 1 < bound):
-                windowed_y[i][j] = pow(y, (i+1) * BASE ** j, mod)
+def windowing(y, bound, mod):
+    """
+    Windowing technique to efficiently compute modular exponentiation of an integer y.
+    Returns a matrix of y raised to powers of BASE with exponents up to a specified bound (modulo mod).
+
+    :param y: an integer we want powers of
+    :param bound: an integer that bounds the exponents of y
+    :param mod: an integer; the modulus
+    :return: a matrix of y raised to powers of BASE with exponents
+             up to a specified bound (modulo mod)
+    """
+    windowed_y = []
+    for i in range(1, BASE):
+        row = []
+        for j in range(LOG_B_ELL):
+            exp = i * (BASE ** j)
+            if exp <= bound:
+                row.append(pow(y, exp, mod))
+            else:
+                row.append(None)
+        windowed_y.append(row)
 
     return windowed_y
-####################
+
 
 def compute_coefficients_from_roots(roots, mod):
     '''
