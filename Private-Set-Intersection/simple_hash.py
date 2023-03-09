@@ -90,7 +90,7 @@ class SimpleHash():
 
         self.num_bins = NUM_OF_BINS
         self.hashed_data = [[None for j in range(BIN_CAP)] for i in range(self.num_bins)] # no_bins bins, len = BIN_CAP
-        self.occurences = [0 for i in range(self.num_bins)]
+        self.occurrences = [0 for i in range(self.num_bins)]
         self.FAIL = 0
         self.hash_seed = hash_seed
         self.bin_capacity = BIN_CAP
@@ -110,24 +110,28 @@ class SimpleHash():
             for i in range(len(self.hash_seed)): # NUM_OF_HASHES
                 self.insert(item, i)
 
-    def insert(self, item, i):
+    def insert(self, item: int, i: int) -> None:
         """
-        Inserts an item using hash i on position given by location.
-        
+        Inserts an item using hash i at the position determined by the hash value.
+
         Args:
         - item: An integer representing the item to be inserted.
         - i: An integer representing the index of the hash function to be used.
-        
+
         Returns: None
         """
 
+        # Compute the hash value and check if the corresponding bin is full
         loc = location(self.hash_seed[i], item)
-        if (self.occurences[loc] < self.bin_capacity):
-            self.hashed_data[loc][self.occurences[loc]] = left_and_index(item, i)
-            self.occurences[loc] += 1
+        if self.occurrences[loc] < self.bin_capacity:
+            # If there is room in the bin, insert the item in the hashed data array
+            self.hashed_data[loc][self.occurrences[loc]] = left_and_index(item, i)
+            self.occurrences[loc] += 1
         else:
+            # If the bin is full, set the FAIL flag and print a warning message
             self.FAIL = 1
-            print('Simple hashing aborted')
+            print('Hashing failed: bin is full')
+
 
     # bins are padded to have a consistent size
     def pad_bins(self):
@@ -143,6 +147,7 @@ class SimpleHash():
             for j in range(self.bin_capacity):
                 if self.hashed_data[i][j] == None:
                     self.hashed_data[i][j] = self.msg_padding
+
 
     def partition(self, num_minibins, minibin_cap, plain_mod):
         """
@@ -163,7 +168,7 @@ class SimpleHash():
             bin_coefficients = []
             for j in range(num_minibins):
                 roots = [self.hashed_data[i][minibin_cap * j + k] for k in range(minibin_cap)]
-                bin_coefficients = bin_coefficients + compute_coefficients_from_roots(roots, plain_mod)
+                bin_coefficients.extend(compute_coefficients_from_roots(roots, plain_mod))
             coefficients.append(bin_coefficients)
-            
+
         return coefficients
