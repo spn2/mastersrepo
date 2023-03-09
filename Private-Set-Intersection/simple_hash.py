@@ -1,4 +1,6 @@
 import math
+from typing import List
+
 import mmh3
 
 from auxiliary_functions import compute_coefficients_from_roots
@@ -29,10 +31,10 @@ def location(seed: int, item: int) -> int:
     hashed item_left and item_right are XORed to obtain the location of the item in the
     hash table.
 
-    :param seed: Seed for the Murmur hash function.
-    :param item: Integer to be hashed.
-    :param output_bits: Number of bits to be used in the output (default: 16).
-    :return: Location of the item in the hash table.
+    :param seed: seed for the Murmur hash function.
+    :param item: integer to be hashed.
+    :param output_bits: number of bits to be used in the output (default: 16).
+    :return: location of the item in the hash table.
     '''
 
     item_left = item >> OUTPUT_BITS
@@ -46,28 +48,27 @@ class SimpleHash():
 
     Attributes:
         num_bins (int): the number of bins to hash the data into
-        hashed_data (list[list[int]]): list of lists representing the hashed data,
+        hashed_data (List[List[int]]): list of lists representing the hashed data,
                                        where each bin has a maximum capacity of bin_capacity
-        occurences (list[int]): list representing the number of elements in each bin
-        FAIL (int): flag indicating if the hash function has failed
-        hash_seed (list[int]): list of seed values for the hash function
-        bin_capacity (int): maximum capacity of each bin
-        msg_padding (int): padding value for empty bins to ensure a consistent size
+        occurences (List[int]): list representing the number of elements in each bin
+        hash_seed (List[int]): list of seed values for the hash function
+        bin_capacity (int): maximum capacity for bins
+        msg_padding (int): padding value for bins to ensure a consistent size
 
     Methods:
-        insert_entries(items: Iterable[int]) -> None:
-            Inserts a set of integers into the hash table
+        insert_entries(items: List[int]) -> None:
+            Inserts a list of integers into the hash table
             using the insert method for each hash seed.
 
         insert(item: int, i: int) -> None:
-            Inserts an integer into the hash table for a given
+            Inserts an integer item into the hash table for a given
             hash seed index i.
 
         pad_bins() -> None:
             Pads empty bins with a consistent value to ensure
             a consistent bin size.
 
-        partition(num_minibins: int, minibin_cap: int, plain_mod: int) -> list[list[int]]:
+        partition(num_minibins: int, minibin_cap: int, plain_mod: int) -> List[List[int]]:
             Performs partitioning on the hashed data.
             Bins are partitioned into num_minibins minibins,
             each with a capacity of minibin_cap.
@@ -75,50 +76,40 @@ class SimpleHash():
             the polynomial representing each minibin.
     """
 
+
     def __init__(self, hash_seed):
         """
         SimpleHashing constructor.
         
-        Args:
-        - hash_seed: List of tuples, where each tuple contains two integers (a,b) representing the
-          coefficients of a hash function of the form (ax + b) % p, where p is a large prime number.
-          Each tuple corresponds to a distinct hash function. The number of tuples (and thus hash functions)
-          must be equal to the value of NUM_OF_HASHES in the constants module.
-        
-        Returns: None
+        :param hash_seed: List of hash seeds
         """
 
         self.num_bins = NUM_OF_BINS
         self.hashed_data = [[None for j in range(BIN_CAP)] for i in range(self.num_bins)] # no_bins bins, len = BIN_CAP
         self.occurrences = [0 for i in range(self.num_bins)]
-        self.FAIL = 0
         self.hash_seed = hash_seed
         self.bin_capacity = BIN_CAP
         self.msg_padding = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(math.log2(NUM_OF_HASHES)) + 1) + 1 # data padding
 
-    def insert_entries(self, items):
+
+    def insert_entries(self, items: List[int]):
         """
         Inserts a set of items using the insert method.
         
-        Args:
-        - items: A set of integers representing the items to be inserted.
-        
-        Returns: None
+        :param items: a list of integers representing the items to be inserted.
         """
 
         for item in items:
             for i in range(len(self.hash_seed)): # NUM_OF_HASHES
                 self.insert(item, i)
 
+
     def insert(self, item: int, i: int) -> None:
         """
         Inserts an item using hash i at the position determined by the hash value.
 
-        Args:
-        - item: An integer representing the item to be inserted.
-        - i: An integer representing the index of the hash function to be used.
-
-        Returns: None
+        :param item: An integer representing the item to be inserted.
+        :param i: An integer representing the index of the hash function to be used.
         """
 
         # Compute the hash value and check if the corresponding bin is full
@@ -128,19 +119,12 @@ class SimpleHash():
             self.hashed_data[loc][self.occurrences[loc]] = left_and_index(item, i)
             self.occurrences[loc] += 1
         else:
-            # If the bin is full, set the FAIL flag and print a warning message
-            self.FAIL = 1
-            print('Hashing failed: bin is full')
+            raise Exception('Hashing failed: bin is full')
 
 
-    # bins are padded to have a consistent size
     def pad_bins(self):
         """
-        Pads bins to have a consistent size.
-        
-        Args: None
-        
-        Returns: None
+        Pads bins in the hash structure to have a consistent size.
         """
 
         for i in range(self.num_bins):
@@ -149,7 +133,7 @@ class SimpleHash():
                     self.hashed_data[i][j] = self.msg_padding
 
 
-    def partition(self, num_minibins, minibin_cap, plain_mod):
+    def partition(self, num_minibins: int, minibin_cap: int, plain_mod: int) -> List[List[int]]:
         """
         Performs partitioning on the bins (self.hashed_data). Bins are partitioned into
         num_minibins minibins, with minibin_cap items in each minibin. Minibins are represented
