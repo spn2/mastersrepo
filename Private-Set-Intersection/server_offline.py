@@ -8,7 +8,7 @@ from auxiliary_functions import read_file_return_list_of_int
 from constants import *
 from oprf import server_prf_offline_parallel
 from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
-from simple_hash import Simple_hash
+from simple_hash import SimpleHash
 
 # simple_hashed_data is padded with MSG_PADDING
 MSG_PADDING = 2 ** (SIGMA_MAX - OUTPUT_BITS + int(log2(NUM_OF_HASHES)) + 1) + 1
@@ -35,7 +35,7 @@ def main():
         console.log("[yellow]OPRF preprocessing finished (server items are embedded on the ellipctic curve). Time taken: {:.2f}s.[/yellow]".format(t1-t0))
 
         # Server's OPRFed items are hashed and padded (see simple_hash.py)
-        SH = Simple_hash(HASH_SEEDS)
+        SH = SimpleHash(HASH_SEEDS)
         SH.insert_entries(PRFed_server_set)
         SH.pad_bins()
 

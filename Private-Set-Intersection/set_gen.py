@@ -14,10 +14,10 @@ def main():
 
 def generate_data_sets(server_size: int, client_size: int, intersection_size: int) -> Tuple[List[int], List[int]]:
     """
-    Generates two disjoint sets of integers with the given sizes and intersection size.
-    The integers must be less than the order of the generator of the elliptic curve
-    (e.g., 192-bit integers if P192 is used). Since we use the sample function, we are 
-	limited to 2 ** 63 - 1 (see max_int).
+    Generates two lists of integers with the given sizes. They have an intersection equal
+    to the given intersection size. The integers must be less than the order of the generator
+    of the elliptic curve used (e.g., 192-bit integers if P192 is used). Since we use the
+    random.sample function, we are limited to 2 ** 63 - 1 (see max_int).
 
     :param server_size: the size of the set for the server
     :param client_size: the size of the set for the client
