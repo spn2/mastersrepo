@@ -1,6 +1,7 @@
 import pickle
 import socket
 from time import time, sleep
+from typing import List, Tuple
 
 import numpy as np
 from Pyfhel import Pyfhel, PyCtxt
@@ -93,7 +94,7 @@ def server_network_setup():
 
     return connectionsocket
 
-def server_FHE_setup(received_data):
+def server_FHE_setup(received_data: List[bytes]) -> Tuple[Pyfhel, bytes]:
     """
     Reconstruct the client's Pyfhel context (including the
     public, relinearization and rotation key), and the
@@ -158,7 +159,8 @@ def recover_encrypted_powers(encrypted_query):
 
     return all_powers
 
-def prepare_server_response(pyfhelobj, all_powers, server_preprocessed_filename):
+def prepare_server_response(pyfhelobj: Pyfhel, all_powers: List[Pyfhel.Ciphertext], 
+                            server_preprocessed_filename: str) -> List[bytes]:
     """
     Computes the polynomials (while in encrypted form; FHE magic happens here)
     and returns the resulting ciphertexts.
@@ -191,7 +193,6 @@ def prepare_server_response(pyfhelobj, all_powers, server_preprocessed_filename)
             
             # # ValueError: not enough relinearization keys
             # # pyfhelobj.relinearize(dot_product)
-
 
         dot_product = dot_product + transposed_poly_coeffs[(MINIBIN_CAP + 1) * i + MINIBIN_CAP]
         evaluated_polynomials.append(dot_product.to_bytes())

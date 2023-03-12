@@ -48,7 +48,7 @@ def main():
 
         # Each PRFed item from the client set is mapped to a Cuckoo hash table
         # We pad the Cuckoo vector with dummy messages
-        CH = Cuckoo(HASH_SEEDS)
+        CH = CuckooHash(HASH_SEEDS)
         CH.insert_items(PRFed_client_set)
         CH.pad(dummy_msg_client)
 

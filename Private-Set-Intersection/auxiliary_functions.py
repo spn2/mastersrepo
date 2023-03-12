@@ -1,4 +1,5 @@
 import pickle
+from random import randint
 import socket
 from typing import Any, List, Optional, Tuple, TypeVar
 
@@ -9,6 +10,21 @@ Multiplicable = TypeVar("Multiplicable", bound="MultiplicableBase")
 class MultiplicableBase:
     def __mul__(self, other: "Multiplicable") -> "Multiplicable":
         pass
+
+def get_random_distinct_integer(bound: int, i: int) -> int:
+    '''
+    Generates a uniform random integer in the range [0, bound-1] that is distinct from i.
+
+    :param bound: an integer representing the upper bound of the range
+    :param i: an integer less than bound
+    :return: a uniformly random integer in the range [0, bound-1] that is distinct from i.
+    '''
+
+    value = randint(0, bound - 1)
+    while (value == i):
+        value = randint(0, bound - 1)
+        
+    return value
 
 def split_int_into_base_digits(n: int, b: int) -> List[int]:
     '''

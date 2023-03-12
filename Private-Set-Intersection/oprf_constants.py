@@ -13,9 +13,10 @@ NUM_OF_PROCESSES = 8
 # Curve parameters
 CURVE = P192
 prime_of_curve_equation = CURVE.p
-GENERATOR_ORDER = CURVE.q
 LOG_P = int(log2(prime_of_curve_equation)) + 1
-G = Point(CURVE.gx, CURVE.gy, curve=CURVE) #generator of the CURVE
+GENERATOR_ORDER = CURVE.q
+# curve generator
+G = Point(CURVE.gx, CURVE.gy, curve=CURVE)
 
 # OPRF keys
 OPRF_CLIENT_KEY = 12345678910111213141516171819222222222222
