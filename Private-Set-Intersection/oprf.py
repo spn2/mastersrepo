@@ -141,7 +141,7 @@ def parallelize_function_on_lists(func, lists):
 
     outputs = []
     with Pool(NUM_OF_PROCESSES) as p:
-        outputs = p.map(func, lists)	
+        outputs = p.map(func, lists)
     # outputs consists of a list of lists
     return unpack_list_of_lists(outputs)
 

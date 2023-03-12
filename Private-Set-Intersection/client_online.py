@@ -8,9 +8,9 @@ from rich.console import Console
 
 from auxiliary_functions import serialize_and_send_data, get_and_deserialize_data
 from constants import *
-from cuckoo_hash import reconstruct_item, Cuckoo
+from cuckoo_hash import reconstruct_item, CuckooHash
 from oprf import client_prf_online_parallel
-from oprf_constants import GENERATOR_ORDER, OPRF_CLIENT_KEY
+from oprf_constants import BASE_ORDER, CLIENT_OPRF_KEY
 
 dummy_msg_client = 2 ** (SIGMA_MAX - OUTPUT_BITS + LOG_NO_HASHES)
 
@@ -42,7 +42,7 @@ def main():
 
 
         # We finalize the OPRF processing by applying the inverse of the secret key, oprf_client_key
-        key_inverse = pow(OPRF_CLIENT_KEY, -1, GENERATOR_ORDER)
+        key_inverse = pow(CLIENT_OPRF_KEY, -1, BASE_ORDER)
         PRFed_client_set = client_prf_online_parallel(PRFed_encoded_client_set, key_inverse)
         console.log("[yellow]OPRF processing finished.[/yellow]")
 

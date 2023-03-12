@@ -10,7 +10,7 @@ from rich.console import Console
 from auxiliary_functions import get_and_deserialize_data, reconstruct_power, serialize_and_send_data
 from constants import *
 from oprf import server_prf_online_parallel
-from oprf_constants import OPRF_SERVER_KEY
+from oprf_constants import SERVER_OPRF_KEY
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
 
         t1 = time()
         # server multiplies the client's curve points with server's OPRF key
-        PRFed_client_set = server_prf_online_parallel(encoded_client_set, OPRF_SERVER_KEY)
+        PRFed_client_set = server_prf_online_parallel(encoded_client_set, SERVER_OPRF_KEY)
         console.log("[yellow]Finished multiplying client's items with server's OPRF key.[/yellow]")
 
         t2 = time()
@@ -159,7 +159,7 @@ def recover_encrypted_powers(encrypted_query):
 
     return all_powers
 
-def prepare_server_response(pyfhelobj: Pyfhel, all_powers: List[Pyfhel.Ciphertext], 
+def prepare_server_response(pyfhelobj: Pyfhel, all_powers: List[PyCtxt], 
                             server_preprocessed_filename: str) -> List[bytes]:
     """
     Computes the polynomials (while in encrypted form; FHE magic happens here)

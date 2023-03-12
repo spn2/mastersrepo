@@ -5,7 +5,7 @@ from rich.console import Console
 
 from auxiliary_functions import *
 from oprf import client_prf_offline
-from oprf_constants import GENERATOR_ORDER, G, OPRF_CLIENT_KEY
+from oprf_constants import BASE_ORDER, G, CLIENT_OPRF_KEY
 
 def main():
     # for prettier printing
@@ -16,7 +16,7 @@ def main():
         t0 = time()
 
         # key * generator of elliptic curve
-        client_point_precomputed = (OPRF_CLIENT_KEY % GENERATOR_ORDER) * G
+        client_point_precomputed = (CLIENT_OPRF_KEY % BASE_ORDER) * G
 
         # store client's set in memory 
         client_set = read_file_return_list_of_int("client_set")

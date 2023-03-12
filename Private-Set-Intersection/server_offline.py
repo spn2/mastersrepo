@@ -7,7 +7,7 @@ from rich.console import Console
 from auxiliary_functions import read_file_return_list_of_int
 from constants import *
 from oprf import server_prf_offline_parallel
-from oprf_constants import GENERATOR_ORDER, G, OPRF_SERVER_KEY
+from oprf_constants import BASE_ORDER, G, SERVER_OPRF_KEY
 from simple_hash import SimpleHash
 
 # simple_hashed_data is padded with MSG_PADDING
@@ -23,7 +23,7 @@ def main():
         server_set = read_file_return_list_of_int("server_set")
 
         # key * generator of elliptic curve (EC)
-        key_gen_point = (OPRF_SERVER_KEY % GENERATOR_ORDER) * G
+        key_gen_point = (SERVER_OPRF_KEY % BASE_ORDER) * G
 
         t0 = time()
 
