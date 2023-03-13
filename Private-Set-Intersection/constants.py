@@ -32,6 +32,11 @@ OUTPUT_BITS = 13
 """
 The number of bits of output of the hash functions.
 """
+POW_2_MASK = 2 ** OUTPUT_BITS - 1
+"""
+The bitmask to select the lower OUTPUT_BITS bits of a hash value.
+Limits the range of the hash value to a OUTPUT_BITS bits.
+"""
 
 # BFV scheme parameters
 PLAIN_MOD = 536903681

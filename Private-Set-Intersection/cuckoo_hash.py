@@ -6,10 +6,7 @@ from typing import List, Tuple, Union
 import mmh3
 
 from auxiliary_functions import get_random_distinct_integer, windowing
-from constants import OUTPUT_BITS, NUM_OF_HASHES, NUM_OF_BINS
-
-POW_2_MASK = 2 ** OUTPUT_BITS - 1
-LOG_NO_HASHES = int(math.log(NUM_OF_HASHES) / math.log(2)) + 1
+from constants import LOG_NO_HASHES, OUTPUT_BITS, NUM_OF_HASHES, NUM_OF_BINS, POW_2_MASK
 
 
 def location(seed, item):
