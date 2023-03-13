@@ -1,43 +1,81 @@
 from math import log2
 
-# Database sizes for client and server
-# Important: INTERSECTION_SIZE < SERVER_SIZE and INTERSECTION_SIZE < CLIENT_SIZE
+# Database sizes
 SERVER_SIZE = 2 ** 20
+"""
+Server's database size.
+"""
 CLIENT_SIZE = 4000
+"""
+Client's database size.
+"""
 INTERSECTION_SIZE = 3500
+"""
+How many items the server and client should have in common.
+Make sure it is smaller than both the client and server size.
+"""
 
-# the number of hashes we use for simple/Cuckoo hashing
+# Hash constants
 NUM_OF_HASHES = 3
-
-# seeds used by both the Server and the Client for the Murmur hash functions
-HASH_SEEDS = [123456789, 10111213141516, 17181920212223]
-
-# output_bits = number of bits of output of the hash functions
-# number of bins for simple/Cuckoo Hashing = 2 ** output_bits
-OUTPUT_BITS = 13
-NUM_OF_BINS = 2 ** OUTPUT_BITS
-
-# encryption parameters of the BFV scheme: the plain modulus and the polynomial modulus degree
-# the polynomial modulus refers to n in the polynomial p(x)=x^n+1
-PLAIN_MOD = 536903681
-POLY_MOD = 2 ** 13
-
-# length of the database items
-SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUM_OF_HASHES)) + 1) 
-
-# B = [68, 176, 536, 1832, 6727] for log(server_size) = [16, 18, 20, 22, 24]
-BIN_CAP = 536
-# partitioning parameter
-ALPHA = 16
-# number of items in a minibin
-MINIBIN_CAP = int(BIN_CAP/ALPHA)
-
-# windowing parameter
-ELL = 2
-
-# write about these
-##############################################################################################################
+"""
+The number of hash functions used for simple/Cuckoo hashing.
+"""
 LOG_NO_HASHES = int(log2(NUM_OF_HASHES)) + 1
-BASE = 2 ** ELL
-LOG_B_ELL = int(log2(MINIBIN_CAP/ELL)) + 1 # <= 2 ** HE.depth
+"""
+The number of bits required to represent the range of hash values produced by the hash functions.
+"""
+HASH_SEEDS = [123456789, 10111213141516, 17181920212223]
+"""
+A list representing the seeds used by both the server and client for the Murmur hash functions.
+"""
+OUTPUT_BITS = 13
+"""
+The number of bits of output of the hash functions.
+"""
 
+# BFV scheme parameters
+PLAIN_MOD = 536903681
+"""
+The plain modulus of the BFV scheme.
+"""
+POLY_MOD = 2 ** 13
+"""
+The polynomial modulus degree of the BFV scheme.
+"""
+
+# Bin parameters
+NUM_OF_BINS = 2 ** OUTPUT_BITS
+"""
+The number of bins for both simple and Cuckoo hashing.
+"""
+BIN_CAP = 536
+"""
+The capacity of each bin in simple/Cuckoo hashing.
+"""
+ALPHA = 16
+"""
+The partitioning parameter
+"""
+MINIBIN_CAP = int(BIN_CAP/ALPHA)
+"""
+The number of items in a minibin.
+"""
+
+# Windowing
+ELL = 2
+"""
+The windowing parameter.
+"""
+BASE = 2 ** ELL
+"""
+The base used for exponentiation in the windowing technique.
+"""
+LOG_B_ELL = int(log2(MINIBIN_CAP/ELL)) + 1
+"""
+Number of elements in each row of the windowing matrix. Needs to be <= 2 ** HE.depth
+"""
+
+SIGMA_MAX = int(log2(PLAIN_MOD)) + OUTPUT_BITS - (int(log2(NUM_OF_HASHES)) + 1)
+"""
+The length of the database items.
+"""
